@@ -1,0 +1,301 @@
+<div class="container py-4">
+  <!-- Top Navigation / Banner -->
+  <div class="card shadow-sm border-0 mb-4 overflow-hidden hero-card">
+    <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <span class="badge bg-white text-success fw-bold mb-2 px-3 py-1 rounded-pill">
+          Secure Payments Portal
+        </span>
+        <h2 class="mb-1 fw-bold text-white">Premium Payments & History</h2>
+        <p class="mb-0 text-white-50">
+          Complete your policy premium payments instantly and track all past transactions.
+        </p>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a routerLink="/customer/my-policies" class="btn btn-outline-light d-inline-flex align-items-center gap-2" style="border-radius: 10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>My Policies</span>
+        </a>
+        <a routerLink="/customer/dashboard" class="btn btn-light d-inline-flex align-items-center gap-2" style="border-radius: 10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Special Purchase Notification Banner -->
+  @if (isFromPurchase) {
+    <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-3 p-3 mb-4 purchase-alert">
+      <div class="alert-icon fs-3">🎉</div>
+      <div class="flex-grow-1">
+        <h6 class="fw-bold mb-1">Policy Purchase Initiated!</h6>
+        <p class="mb-0 small">
+          Your policy <strong>POL-{{ selectedPolicyNumber }}</strong> ({{ selectedPlanName }}) has been created with status <em>Pending</em>. Complete your initial premium payment below to activate coverage immediately.
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- Success / Error Alert Message -->
+  @if (message) {
+    <div class="alert alert-dismissible fade show mb-4 shadow-sm" [ngClass]="isSuccess ? 'alert-success border-success' : 'alert-danger border-danger'" style="border-radius: 12px;">
+      <div class="d-flex align-items-center gap-2">
+        <span class="fs-5">{{ isSuccess ? '✅' : '⚠️' }}</span>
+        <span class="fw-medium">{{ message }}</span>
+      </div>
+    </div>
+  }
+
+  <div class="row g-4">
+    <!-- Left Column: Record Payment Card -->
+    <div class="col-lg-5">
+      <div class="card payment-box-card shadow-sm border-0 h-100">
+        <div class="card-header bg-success text-white p-3 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-5">💳</span>
+            <h5 class="mb-0 fw-bold">Record Payment</h5>
+          </div>
+          <span class="badge bg-white text-success fw-bold px-2 py-1 rounded">Instant</span>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Policy Switcher Trigger if multiple policies exist -->
+          @if (policies.length > 1) {
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <span class="text-muted small fw-semibold">Target Policy</span>
+              <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1 small" (click)="togglePolicySelector()">
+                {{ showPolicySelector ? 'Keep Current' : 'Change Policy' }}
+              </button>
+            </div>
+
+            @if (showPolicySelector) {
+              <div class="mb-3 p-3 bg-light rounded-3 border">
+                <label class="form-label small fw-bold text-dark mb-1">Select Policy to Pay:</label>
+                <select class="form-select form-select-sm" [value]="selectedPolicyId" (change)="onPolicyDropdownChange($event)">
+                  <option [value]="0" disabled>-- Choose Policy --</option>
+                  @for (p of policies; track p.policyId) {
+                    <option [value]="p.policyId">
+                      POL-{{ p.policyNumber }} | {{ p.planName }} (₹{{ p.premiumAmount | number }})
+                    </option>
+                  }
+                </select>
+              </div>
+            }
+          }
+
+          <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+            <!-- Policy Number (Auto-populated, Locked) -->
+            <div class="mb-3">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                <span class="fw-semibold text-secondary small text-uppercase">Policy Number</span>
+                <span class="badge bg-secondary-subtle text-secondary small">🔒 Cannot Edit</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+                <input type="text" class="form-control bg-light border-start-0 fw-bold text-dark"
+                       [value]="selectedPolicyNumber ? ('POL-' + selectedPolicyNumber) : 'No Policy Selected'"
+                       readonly disabled>
+              </div>
+            </div>
+
+            <!-- Policy Name (Auto-populated, Locked) -->
+            <div class="mb-3">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                <span class="fw-semibold text-secondary small text-uppercase">Policy Name</span>
+                <span class="badge bg-secondary-subtle text-secondary small">🔒 Cannot Edit</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-primary border-end-0">🛡️</span>
+                <input type="text" class="form-control bg-light border-start-0 fw-semibold text-primary"
+                       [value]="selectedPlanName || 'Standard Insurance Plan'"
+                       readonly disabled>
+              </div>
+            </div>
+            
+
+            <!-- Amount (Auto-populated, Locked) -->
+            <div class="mb-3">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                <span class="fw-semibold text-secondary small text-uppercase">Premium Amount</span>
+                <span class="badge bg-secondary-subtle text-secondary small">🔒 Cannot Edit</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light fw-bold text-muted border-end-0">₹</span>
+                <input type="text" class="form-control bg-light border-start-0 fs-5 fw-bold text-dark"
+                       [value]="selectedAmount ? (selectedAmount | number) : '0'"
+                       readonly disabled>
+              </div>
+            </div>
+
+            <!-- Payment Mode (The ONLY editable dropdown) -->
+            <div class="mb-3">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                <span class="fw-semibold text-dark">Payment Option <span class="text-danger">*</span></span>
+                <span class="badge bg-success-subtle text-success small">Select Mode</span>
+              </label>
+              <select class="form-select form-select-lg payment-mode-select shadow-sm" formControlName="paymentMode">
+                @for (mode of paymentModes; track mode.id) {
+                  <option [value]="mode.id">{{ mode.label }}</option>
+                }
+              </select>
+              <div class="form-text small text-muted">
+                Choose your preferred transaction method to complete this payment.
+              </div>
+            </div>
+
+            <!-- Transaction Reference No (Auto-generated, Locked) -->
+            <div class="mb-4">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                <span class="fw-semibold text-secondary small text-uppercase">Transaction Ref No</span>
+                <span class="badge bg-secondary-subtle text-secondary small">Auto-Generated</span>
+              </label>
+              <div class="input-group">
+                <input type="text" class="form-control bg-light font-monospace" formControlName="transactionReferenceNo" readonly>
+                <button class="btn btn-outline-secondary" type="button" (click)="generateNewTxnRef()" title="Regenerate Reference ID">
+                  🔄
+                </button>
+              </div>
+              <div class="form-text small text-muted">System simulation generates a unique reference code.</div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold shadow-sm submit-payment-btn d-flex justify-content-center align-items-center gap-2"
+                    [disabled]="paymentForm.invalid || !selectedPolicyId || selectedAmount <= 0 || isSubmitting">
+              @if (isSubmitting) {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span>Processing Payment...</span>
+              } @else {
+                <span>Submit Payment of ₹{{ selectedAmount | number }}</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              }
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Payment History Card -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0 h-100 history-box-card">
+        <div class="card-header bg-primary text-white p-3 d-flex justify-content-between align-items-center"
+             style="background: linear-gradient(135deg, #0052cc 0%, #003380 100%) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-5">📋</span>
+            <h5 class="mb-0 fw-bold">Payment History</h5>
+          </div>
+          <span class="badge bg-white text-primary fw-bold px-2 py-1 rounded">
+            {{ payments.length }} Recorded
+          </span>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light border-bottom">
+                <tr>
+                  <th class="ps-3 py-3 text-secondary text-uppercase small fw-bold">Date</th>
+                  <th class="py-3 text-secondary text-uppercase small fw-bold">Policy Number</th>
+                  <th class="py-3 text-secondary text-uppercase small fw-bold">Policy Name</th>
+                   <th class="ps-3 py-3 text-secondary text-uppercase small fw-bold">Next Due date</th>
+                  <th class="py-3 text-secondary text-uppercase small fw-bold">Amount</th>
+                  <th class="py-3 text-secondary text-uppercase small fw-bold">Mode</th>
+                  <th class="py-3 text-secondary text-uppercase small fw-bold">Ref No</th>
+                  <th class="pe-3 py-3 text-secondary text-uppercase small fw-bold text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of payments; track p.paymentId) {
+                  <tr>
+                    <td class="ps-3 text-nowrap">
+                      <div class="fw-semibold text-dark">{{ p.paymentDate | date:'dd-MM-yyyy' }}</div>
+                      <div class="text-muted small">{{ p.paymentDate | date:'hh:mm a' }}</div>
+                    </td>
+                    <td>
+                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold">
+                        POL-{{ p.policyNumber }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center gap-1">
+                        <span class="text-primary small">🛡️</span>
+                        <span class="fw-semibold text-dark">{{ getPlanName(p) }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      @if (getNextDueDate(p); as dueDate) {
+                        <div class="fw-semibold text-primary font-monospace">
+                          {{ dueDate | date:'dd-MM-yyyy' }}
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">Renewal Due</small>
+                      } @else {
+                        <span class="badge bg-light text-muted border">None (1-Trip)</span>
+                      }
+                    </td>
+                    <td>
+                      <span class="fw-bold fs-6 text-dark">₹{{ p.amount | number }}</span>
+                    </td>
+                    <td>
+                      @if (p.paymentMode === 0) {
+                        <span class="badge bg-info-subtle text-info border border-info-subtle">⚡ UPI</span>
+                      } @else if (p.paymentMode === 1) {
+                        <span class="badge bg-purple-subtle text-purple border border-purple-subtle">💳 Card</span>
+                      } @else if (p.paymentMode === 2) {
+                        <span class="badge bg-secondary-subtle text-secondary border">🏦 NetBanking</span>
+                      } @else {
+                        <span class="badge bg-light text-dark border">💵 Cash</span>
+                      }
+                    </td>
+                    <td>
+                      <code class="small text-secondary fw-semibold">{{ p.transactionReferenceNo }}</code>
+                    </td>
+                    <td class="pe-3 text-center">
+                      @if (p.paymentStatus === 1) {
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                          ✓ Success
+                        </span>
+                      } @else if (p.paymentStatus === 0) {
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                          ✗ Failed
+                        </span>
+                      } @else {
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">
+                          ⏳ Pending
+                        </span>
+                      }
+                    </td>
+                  </tr>
+                }
+                @if (payments.length === 0) {
+                  <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                      <div class="fs-1 mb-2">🧾</div>
+                      <h6 class="fw-semibold text-dark">No Payment History Found</h6>
+                      <p class="small text-muted mb-0">Payments recorded for your policies will automatically appear here.</p>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

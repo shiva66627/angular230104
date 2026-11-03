@@ -1,0 +1,260 @@
+<div class="container mt-4">
+  <div class="row">
+    
+    <div class="col-md-5 mb-4">
+      <div class="card shadow border-danger">
+        <div class="card-header bg-danger text-white">
+          <h4 class="mb-0">Raise New Claim</h4>
+        </div>
+        <div class="card-body">
+          
+          <div *ngIf="message" class="alert" [ngClass]="isSuccess ? 'alert-success' : 'alert-danger'">
+            {{ message }}
+          </div>
+
+          <form [formGroup]="claimForm" (ngSubmit)="onSubmit()">
+            
+            <div class="mb-3">
+              <label class="form-label">Policy Name</label>
+              <select class="form-select" formControlName="policyId">
+                <option [ngValue]="0" disabled>Select Policy Name</option>
+                @for (p of policies; track p.policyId) {
+                  <option [ngValue]="p.policyId">{{ p.planName || ('Policy #' + p.policyNumber) }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Policy Number</label>
+              <input type="text" class="form-control bg-light" [value]="selectedPolicyNumber" readonly placeholder="Auto-populated upon selecting Policy Name">
+              <small *ngIf="selectedPolicyCoverage" class="text-muted d-block mt-1">
+                Max Coverage: <strong>₹{{ selectedPolicyCoverage | number }}</strong>
+              </small>
+            </div>
+
+            <!-- Waiting Period Info Notice -->
+            <div *ngIf="selectedPolicy" class="alert alert-info py-2 px-3 mb-3 small d-flex align-items-center gap-2 rounded-3 border-0 bg-info-subtle text-info-emphasis">
+              <span class="fs-5">🛡️</span>
+              <div>
+                Purchased on <strong>{{ selectedPolicy.startDate | date:'dd-MMM-yyyy' }}</strong>.
+                20-day waiting period completes on <strong>{{ waitingPeriodEligibleDate | date:'dd-MMM-yyyy' }}</strong>.
+                Incidents occurring on or after this date are eligible to claim.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Claim Amount (₹)</label>
+              <input type="number" class="form-control" formControlName="claimAmount" min="1">
+              <div *ngIf="claimForm.get('claimAmount')?.touched && claimForm.get('claimAmount')?.invalid" class="text-danger mt-1 small">
+                <span *ngIf="claimForm.get('claimAmount')?.errors?.['required']">Claim Amount is required.</span>
+                <span *ngIf="claimForm.get('claimAmount')?.errors?.['min']">Claim Amount must be greater than 0.</span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                <span>Incident Date (DD-MM-YYYY) <span class="text-danger">*</span></span>
+                <small class="text-muted">Must be after 20-day waiting period</small>
+              </label>
+              <input type="text" class="form-control" formControlName="incidentDate"
+                placeholder="e.g. 25-11-2026" maxlength="10"
+                (input)="onIncidentDateInput($event)"
+                [ngClass]="{
+                  'is-invalid': incidentDateStatus === 'error',
+                  'is-valid': incidentDateStatus === 'ok'
+                }">
+              @if (incidentDateStatus === 'error') {
+                <div class="text-danger mt-1 small fw-semibold">
+                  ✕ {{ incidentDateMessage }}
+                </div>
+              } @else if (incidentDateStatus === 'ok') {
+                <div class="text-success mt-1 small fw-bold">
+                  ✓ {{ incidentDateMessage }}
+                </div>
+              } @else {
+                <small class="text-muted d-block mt-1">Enter incident date in DD-MM-YYYY format</small>
+              }
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Claim Reason</label>
+              <textarea class="form-control" rows="3" formControlName="claimReason"></textarea>
+            </div>
+
+            <!-- Supporting Documents with Cloudinary Upload -->
+            <div class="mb-4">
+              <label class="form-label d-flex justify-content-between align-items-center">
+                <span>Supporting Documents <span class="text-danger">*</span></span>
+                <span class="badge" [ngClass]="supportingDocs.length > 0 ? 'bg-success' : 'bg-secondary'">{{ supportingDocs.length }} added</span>
+              </label>
+
+              <!-- Hidden native file input -->
+              <input type="file" #fileInput (change)="onFileSelected($event)" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" style="display: none;">
+
+              <!-- Upload Button triggering local file picker -->
+              <button type="button" class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 mb-2 py-2" (click)="fileInput.click()" [disabled]="isUploading">
+                <svg *ngIf="!isUploading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span *ngIf="isUploading" class="spinner-border spinner-border-sm" role="status"></span>
+                <span>{{ isUploading ? 'Uploading to Cloudinary...' : 'Upload Document from Device' }}</span>
+              </button>
+
+              <div *ngIf="uploadError" class="alert alert-danger py-2 px-3 small mb-2">
+                {{ uploadError }}
+              </div>
+
+              <!-- Secondary option: manual URL or reference -->
+              <div class="input-group input-group-sm mb-2">
+                <input type="text" class="form-control" placeholder="Or paste external link / reference" formControlName="docInput" (keyup.enter)="addDoc()">
+                <button class="btn btn-outline-secondary" type="button" (click)="addDoc()">Add</button>
+              </div>
+
+              <!-- List of attached documents -->
+              <ul *ngIf="supportingDocs.length > 0" class="list-group mb-2" style="max-height: 160px; overflow-y: auto;">
+                @for (d of supportingDocs; track $index) {
+                  <li class="list-group-item d-flex justify-content-between align-items-center p-2 small">
+                    <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 82%;">
+                      <span class="badge bg-success-subtle text-success border border-success-subtle">✓</span>
+                      @if (isUrl(d)) {
+                        <a [href]="d" target="_blank" rel="noopener noreferrer" class="text-truncate text-primary fw-medium text-decoration-underline" title="Click to preview in new tab">
+                          {{ getDocDisplayName(d) }}
+                        </a>
+                      } @else {
+                        <span class="text-truncate">{{ d }}</span>
+                      }
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger border-0 p-1" (click)="removeDoc($index)" title="Remove document">
+                      ✕
+                    </button>
+                  </li>
+                }
+              </ul>
+
+              <div *ngIf="supportingDocs.length === 0" class="text-danger small">
+                At least one supporting document is required.
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-danger w-100" [disabled]="claimForm.invalid || !claimForm.get('policyId')?.value || claimForm.get('policyId')?.value === 0 || supportingDocs.length === 0 || isUploading || incidentDateStatus !== 'ok'">
+              Submit Claim
+            </button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">My Claims</h4>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Claim No.</th>
+                  <th>Policy</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Staff Remarks & Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of claims; track c.claimId) {
+                <tr>
+                  <td><strong>CLM-{{ c.claimNumber }}</strong><br><small class="text-muted">{{ c.createdDate | date:'dd-MMM' }}</small></td>
+                  <td>POL-{{ c.policyNumber }}</td>
+                  <td>₹{{ c.claimAmount | number }}</td>
+                  <td>
+                    @if (c.claimStatus === 0) { <span class="badge bg-warning text-dark">Pending</span> }
+                    @else if (c.claimStatus === 1) { <span class="badge bg-success">Approved</span> }
+                    @else { <span class="badge bg-danger">Rejected</span> }
+                  </td>
+                  <td>
+                    @if (needsReupload(c)) {
+                      <div>
+                        <span class="badge bg-danger mb-1">⚠️ Action Required</span>
+                        <div class="small text-danger fw-semibold">{{ c.agentRemarks }}</div>
+                        <button type="button" class="btn btn-sm btn-outline-danger mt-1 py-1 px-2 fw-medium" (click)="openReuploadModal(c)">
+                          📤 Re-upload Images / Proof
+                        </button>
+                      </div>
+                    } @else if (isAwaitingReevaluation(c)) {
+                      <div>
+                        <span class="badge bg-info text-dark mb-1">⏳ Awaiting Staff Re-evaluation</span>
+                        <div class="small text-muted">{{ c.agentRemarks }}</div>
+                      </div>
+                    } @else {
+                      <div class="small text-muted">{{ c.agentRemarks || c.adminRemarks || 'Under Initial Review' }}</div>
+                    }
+                  </td>
+                </tr>
+                }
+                @if (claims.length === 0) {
+                <tr>
+                  <td colspan="5" class="text-center p-3 text-muted">No claims found.</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Re-upload Documents Modal -->
+  @if (selectedReuploadClaim) {
+  <div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.55);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow border-0">
+        <div class="modal-header bg-danger text-white py-3">
+          <h5 class="modal-title mb-0">Re-upload Evidence — CLM-{{ selectedReuploadClaim.claimNumber }}</h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeReuploadModal()"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-warning py-2 px-3 small mb-3">
+            <strong>Staff Reason:</strong> {{ selectedReuploadClaim.agentRemarks }}
+          </div>
+
+          <label class="form-label fw-bold">Select New Images / Documents</label>
+          <input type="file" #reuploadFileInput (change)="onReuploadFileSelected($event)" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" style="display: none;">
+          
+          <button type="button" class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2 mb-2 py-2" (click)="reuploadFileInput.click()" [disabled]="isUploadingReupload">
+            <span *ngIf="isUploadingReupload" class="spinner-border spinner-border-sm"></span>
+            <span>{{ isUploadingReupload ? 'Uploading to Cloudinary...' : 'Upload Image / Doc from Device' }}</span>
+          </button>
+
+          <div *ngIf="reuploadError" class="alert alert-danger py-2 small mb-2">{{ reuploadError }}</div>
+
+          <div class="input-group input-group-sm mb-3">
+            <input type="text" class="form-control" placeholder="Or paste document URL" [(ngModel)]="reuploadInputUrl" (keyup.enter)="addReuploadDocUrl()">
+            <button class="btn btn-outline-secondary" type="button" (click)="addReuploadDocUrl()">Add</button>
+          </div>
+
+          <!-- Document List -->
+          <ul *ngIf="reuploadDocs.length > 0" class="list-group mb-2">
+            @for (d of reuploadDocs; track $index) {
+              <li class="list-group-item d-flex justify-content-between align-items-center p-2 small">
+                <span class="text-truncate" style="max-width: 85%;">✓ {{ getDocDisplayName(d) }}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger border-0 p-0 px-1" (click)="removeReuploadDoc($index)">✕</button>
+              </li>
+            }
+          </ul>
+        </div>
+        <div class="modal-footer bg-light py-2">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="closeReuploadModal()">Cancel</button>
+          <button type="button" class="btn btn-danger btn-sm px-3" (click)="submitReupload()" [disabled]="reuploadDocs.length === 0 || isSubmittingReupload || isUploadingReupload">
+            {{ isSubmittingReupload ? 'Submitting...' : 'Submit Updated Documents' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }

@@ -1,0 +1,67 @@
+<div class="container mt-4">
+  <div class="card shadow border-0" style="border-radius: 16px; overflow: hidden;">
+    <div class="card-header bg-primary text-white p-4" style="background: linear-gradient(135deg, #0062ff, #0041b3) !important;">
+      <h3 class="mb-0 fw-bold">
+        @if (selectedCategory === null) {
+          Explore Insurance Categories
+        } @else {
+          Explore {{ getSelectedCategoryName() }}
+        }
+      </h3>
+    </div>
+    <div class="card-body p-4 bg-light">
+
+      @if (selectedCategory === null) {
+        <div class="row animated-fade-in">
+          @for (cat of categories; track cat.id) {
+          <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 category-card" [ngClass]="cat.colorClass" (click)="selectCategory(cat.id)">
+              <div class="card-body text-center d-flex flex-column justify-content-center p-4">
+                <div class="icon-wrapper">
+                  {{ cat.emoji }}
+                </div>
+                <h4 class="category-title">{{ cat.name }}</h4>
+                <p class="category-description mb-0">{{ cat.description }}</p>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      } @else {
+        <div class="animated-fade-in">
+          <div class="back-btn-container">
+            <button class="btn btn-outline-primary btn-back shadow-sm" (click)="selectCategory(null)">
+              ← Back to Categories
+            </button>
+          </div>
+
+          <div class="row">
+            @for (p of getFilteredProducts(); track p.productId) {
+            <div class="col-md-4 mb-4">
+              <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; border-left: 4px solid #0062ff !important;">
+                <div class="card-body p-4">
+                  <h4 class="card-title text-primary fw-bold mb-3">{{ p.productName }}</h4>
+                  <p class="card-text text-muted">{{ p.description }}</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 p-4 pt-0">
+                  <a [routerLink]="['/customer/policyplans']" [queryParams]="{productId: p.productId}" class="btn btn-primary w-100 shadow-sm" style="border-radius: 8px;">
+                    View Plans
+                  </a>
+                </div>
+              </div>
+            </div>
+            }
+            @if (getFilteredProducts().length === 0) {
+            <div class="col-12 text-center text-muted py-5">
+              <div class="fs-2 mb-3">🔍</div>
+              <h5>No active products available in this category at the moment.</h5>
+              <p class="text-secondary">Please check back later or choose another category.</p>
+            </div>
+            }
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
+</div>

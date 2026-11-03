@@ -1,0 +1,30 @@
+.container{
+    margin-top:30px;
+}
+
+.card{
+    border-radius:12px;
+}
+
+.card-header{
+    font-size:22px;
+    font-weight:bold;
+}
+
+table{
+    margin-top:10px;
+}
+
+th{
+    text-align:center;
+    vertical-align:middle;
+}
+
+td{
+    vertical-align:middle;
+}
+
+.badge{
+    font-size:14px;
+    padding:8px 12px;
+}

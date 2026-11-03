@@ -1,0 +1,122 @@
+/* Premium Categories Stylesheet */
+
+.category-card {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  position: relative;
+}
+
+.category-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  border-color: transparent;
+}
+
+.category-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  transition: background 0.3s ease;
+}
+
+/* Category Card Gradients & Details */
+.health-card:hover::before {
+  background: linear-gradient(90deg, #ff5e62, #ff9966);
+}
+.health-card .icon-wrapper {
+  background: rgba(255, 94, 98, 0.1);
+  color: #ff5e62;
+}
+
+.travel-card:hover::before {
+  background: linear-gradient(90deg, #00c6ff, #0072ff);
+}
+.travel-card .icon-wrapper {
+  background: rgba(0, 198, 255, 0.1);
+  color: #0072ff;
+}
+
+.life-card:hover::before {
+  background: linear-gradient(90deg, #11998e, #38ef7d);
+}
+.life-card .icon-wrapper {
+  background: rgba(17, 153, 142, 0.1);
+  color: #11998e;
+}
+
+.motor-card:hover::before {
+  background: linear-gradient(90deg, #7f00ff, #e100ff);
+}
+.motor-card .icon-wrapper {
+  background: rgba(127, 0, 255, 0.1);
+  color: #7f00ff;
+}
+
+/* Common elements */
+.icon-wrapper {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  margin: 0 auto 1.5rem auto;
+  transition: transform 0.3s ease;
+}
+
+.category-card:hover .icon-wrapper {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.category-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+}
+
+.category-description {
+  font-size: 0.9rem;
+  color: #718096;
+  line-height: 1.5;
+}
+
+/* Fade in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animated-fade-in {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+.back-btn-container {
+  margin-bottom: 2rem;
+}
+
+.btn-back {
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  transform: translateX(-4px);
+}

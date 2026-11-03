@@ -1,0 +1,274 @@
+<div class="container mt-4">
+  <div class="card shadow">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Review Claims</h4>
+      <a routerLink="/staff/dashboard" class="btn btn-sm btn-dark fw-medium">← Operations Desk</a>
+    </div>
+    <div class="card-body p-0">
+      <!-- Filter Bar -->
+      <div class="p-3 bg-light border-bottom">
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">🔍</span>
+              <input type="text" [(ngModel)]="searchText" class="form-control border-start-0" placeholder="Search by Claim ID, Customer, Policy, Reason...">
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <select class="form-select" [(ngModel)]="selectedStatus">
+              <option value="All">All Status</option>
+              <option value="0">Pending</option>
+              <option value="1">Approved</option>
+              <option value="2">Rejected</option>
+            </select>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <select class="form-select" [(ngModel)]="sortBy">
+              <option value="default">Default Sort</option>
+              <option value="date-desc">Incident Date: Newest First</option>
+              <option value="date-asc">Incident Date: Oldest First</option>
+              <option value="amount-desc">Claim Amount: High to Low</option>
+              <option value="amount-asc">Claim Amount: Low to High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      @if (message) {
+        <div class="alert m-3" [ngClass]="isSuccess ? 'alert-success' : 'alert-danger'">
+          {{ message }}
+        </div>
+      }
+
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Claim No.</th>
+              <th>Customer</th>
+              <th>Policy No.</th>
+              <th>Amount</th>
+              <th>Reason</th>
+              <th>Incident Date</th>
+              <th>Status</th>
+              <th>Staff Remarks</th>
+              <th class="text-center">Documents</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of getFilteredClaims(); track c.claimId) {
+            <tr>
+              <td class="text-nowrap fw-semibold">CLM-{{ c.claimNumber || c.claimId }}</td>
+              <td>{{ c.customerName || 'N/A' }}</td>
+              <td class="text-nowrap">POL-{{ c.policyNumber || c.policyId }}</td>
+              <td>{{ c.claimAmount | currency:'INR' }}</td>
+              <td>{{ c.claimReason }}</td>
+              <td>{{ c.incidentDate | date:'dd-MM-yyyy' }}</td>
+              <td>
+                <span class="badge" [ngClass]="{
+                  'bg-warning text-dark': c.claimStatus === 0,
+                  'bg-success': c.claimStatus === 1,
+                  'bg-danger': c.claimStatus === 2
+                }">{{ claimStatus[c.claimStatus] }}</span>
+              </td>
+              <td>{{ c.agentRemarks || 'None' }}</td>
+              <td class="text-center text-nowrap">
+                <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 px-2 py-1" (click)="openDocsModal(c)" title="View attached supporting documents">
+                  <span>📄</span>
+                  <span class="fw-medium">View</span>
+                </button>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-warning text-dark" (click)="openReviewModal(c)">
+                  Review
+                </button>
+              </td>
+            </tr>
+            }
+            @if (getFilteredClaims().length === 0) {
+            <tr>
+              <td colspan="10" class="text-center p-3 text-muted">No claims found.</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer bg-white border-top py-3">
+      <small class="text-muted">
+        Showing {{ getFilteredClaims().length }} of {{ claims.length }} records
+      </small>
+    </div>
+  </div>
+
+  <!-- Documents Modal Overlay -->
+  @if (selectedDocsClaim) {
+  <div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content shadow border-0">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title d-flex align-items-center gap-2">
+            <span>📄</span>
+            <span>Supporting Documents for Claim #{{ selectedDocsClaim.claimNumber || selectedDocsClaim.claimId }}</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeDocsModal()"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-center pb-2 mb-3 border-bottom text-muted small gap-2">
+            <div><strong>Customer:</strong> {{ selectedDocsClaim.customerName || 'N/A' }}</div>
+            <div><strong>Policy:</strong> POL-{{ selectedDocsClaim.policyNumber || selectedDocsClaim.policyId }}</div>
+            <div><strong>Amount:</strong> {{ selectedDocsClaim.claimAmount | currency:'INR' }}</div>
+          </div>
+
+          @if (isLoadingDocs) {
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="text-muted small mt-2 mb-0">Loading supporting documents...</p>
+            </div>
+          } @else if (docsError) {
+            <div class="alert alert-danger py-2 small mb-0">{{ docsError }}</div>
+          } @else if (claimDocuments.length === 0) {
+            <div class="alert alert-light border text-center py-4 text-muted mb-0">
+              <span class="fs-4 d-block mb-1">📭</span>
+              <span>No supporting documents found for this claim.</span>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover table-bordered align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Document Name</th>
+                    <th>Type</th>
+                    <th>Uploaded Date</th>
+                    <th class="text-center" style="width: 140px;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (doc of claimDocuments; track doc.documentId; let idx = $index) {
+                    <tr>
+                      <td class="text-center text-muted small">{{ idx + 1 }}</td>
+                      <td>
+                        <div class="fw-semibold">{{ doc.documentName || 'Supporting Document' }}</div>
+                      </td>
+                      <td>
+                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
+                          {{ doc.documentType || 'File' }}
+                        </span>
+                      </td>
+                      <td class="small text-muted">
+                        {{ doc.uploadedDate ? (doc.uploadedDate | date:'dd-MM-yyyy HH:mm') : 'N/A' }}
+                      </td>
+                      <td class="text-center">
+                        @if (isUrl(doc.field)) {
+                          <a [href]="doc.field" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 px-3">
+                            <span>Open File</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                              <polyline points="15 3 21 3 21 9"></polyline>
+                              <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                          </a>
+                        } @else {
+                          <code class="text-truncate d-inline-block" style="max-width: 130px;">{{ doc.field }}</code>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary px-4" (click)="closeDocsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Review Modal Overlay -->
+  @if (selectedClaim) {
+  <div class="modal show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-3">
+        <div class="modal-header bg-warning text-dark py-3">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-5">📋</span>
+            <h5 class="modal-title mb-0 fw-bold">Operations Desk Review: CLM-{{ selectedClaim.claimNumber || selectedClaim.claimId }}</h5>
+          </div>
+          <button type="button" class="btn-close" (click)="closeReviewModal()"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <!-- Claim Summary Card -->
+          <div class="card border-0 shadow-sm p-3 mb-3 bg-white rounded-3">
+            <div class="row g-3 small">
+              <div class="col-md-4">
+                <span class="text-muted">Customer Name:</span>
+                <div class="fw-bold text-dark fs-6">{{ selectedClaim.customerName || 'N/A' }}</div>
+              </div>
+              <div class="col-md-4">
+                <span class="text-muted">Policy Number:</span>
+                <div class="fw-bold font-monospace text-primary fs-6">POL-{{ selectedClaim.policyNumber || selectedClaim.policyId }}</div>
+              </div>
+              <div class="col-md-4">
+                <span class="text-muted">Claimed Amount:</span>
+                <div class="fw-bold text-dark fs-5">{{ selectedClaim.claimAmount | currency:'INR' }}</div>
+              </div>
+              <div class="col-md-6 mt-2">
+                <span class="text-muted">Incident Date:</span>
+                <div class="fw-semibold">{{ selectedClaim.incidentDate | date:'dd MMMM yyyy' }}</div>
+                <small class="text-muted">Reported {{ getDaysSinceIncident(selectedClaim.incidentDate) }} days ago (&le; 20-day limit rule applied)</small>
+              </div>
+              <div class="col-md-6 mt-2">
+                <span class="text-muted">Customer Stated Reason:</span>
+                <div class="fw-semibold text-dark">{{ selectedClaim.claimReason }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Review Decision Inputs -->
+          <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+            <div class="mb-3">
+              <label class="form-label fw-bold">Staff Recommendation to Underwriter / Admin</label>
+              <select class="form-select" [(ngModel)]="recommendedStatus">
+                <option value="Approve">✓ Recommend Approval (Documents & incident verified)</option>
+                <option value="Reject">✕ Recommend Rejection (Discrepancy / policy exclusion)</option>
+              </select>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label fw-bold">Staff Operations Remarks</label>
+              <textarea class="form-control" [(ngModel)]="reviewRemarks" rows="3" placeholder="Enter findings, document verification notes, or reason for recommendation..."></textarea>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              <small class="text-muted w-100 mb-1">Quick note templates:</small>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" (click)="setRemarksTemplate('Verified all uploaded hospital/police bills. Incident occurred within 20 days. Recommend approval.')">
+                ✓ Valid & Verified
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" (click)="setRemarksTemplate('Policyholder documents confirmed. Incident verified with surveyor.')">
+                ✓ Surveyor Approved
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" (click)="setRemarksTemplate('Missing medical invoice receipts or damage photos. Customer requested to submit additional proof.')">
+                ⚠️ Need More Proof
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" (click)="setReuploadTemplate()">
+                ✕ Reject (Re-upload Images)
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-white py-3 border-top d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-secondary px-4" (click)="closeReviewModal()">Cancel</button>
+          <button type="button" class="btn btn-warning text-dark px-4 fw-bold" (click)="submitReview()">
+            Submit Operations Review
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</div>

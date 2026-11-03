@@ -1,0 +1,155 @@
+<div class="container mt-4">
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Insurance Products</h3>
+            <button class="btn btn-light" (click)="openAddModal()">
+                + Add Product
+            </button>
+        </div>
+
+        <div class="card-body p-0">
+            <!-- Filter Bar -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">🔍</span>
+                            <input type="text" [(ngModel)]="searchText" class="form-control border-start-0" placeholder="Search by Product name, ID...">
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <select class="form-select" [(ngModel)]="selectedType">
+                            <option value="All">All Types</option>
+                            <option value="0">Health</option>
+                            <option value="1">Motor</option>
+                            <option value="2">Life</option>
+                            <option value="3">Travel</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <select class="form-select" [(ngModel)]="selectedStatus">
+                            <option value="All">All Status</option>
+                            <option value="1">Available</option>
+                            <option value="0">Not Available</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive p-3">
+                <table class="table table-bordered table-hover table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Product Name</th>
+                            <th>Product Type</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (p of getFilteredProducts(); track p.productId) {
+                        <tr>
+                            <td class="text-nowrap">PRD-{{ p.productId }}</td>
+                            <td>{{ p.productName }}</td>
+                            <td>{{ ProductType[p.productType] }}</td>
+                            <td>{{ p.description }}</td>
+                            <td>
+                                @if (p.status == ProductStatus.Available) {
+                                <span class="badge bg-success">
+                                    Available
+                                </span>
+                                } @else {
+                                <span class="badge bg-danger">
+                                    Not Available
+                                </span>
+                                }
+                            </td>
+                            <td class="text-nowrap">{{ p.createdDate | date:'dd-MM-yyyy' }}</td>
+                            <td class="text-nowrap">
+                                <button class="btn btn-sm btn-warning me-1" (click)="openEditModal(p)">
+                                    Edit
+                                </button>
+                                @if (p.status == ProductStatus.Available) {
+                                    <button class="btn btn-sm btn-danger" (click)="deactivateProduct(p.productId)">
+                                        Deactivate
+                                    </button>
+                                } @else {
+                                    <button class="btn btn-sm btn-success" (click)="activateProduct(p.productId)">
+                                        Activate
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                        }
+                        @if (getFilteredProducts().length === 0) {
+                        <tr>
+                            <td colspan="7" class="text-center p-3 text-muted">No products found.</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-top py-3">
+            <small class="text-muted">
+                Showing {{ getFilteredProducts().length }} of {{ products.length }} records
+            </small>
+        </div>
+    </div>
+
+</div>
+
+<!-- Custom Modal Backdrop and Dialog using Angular *ngIf -->
+<div class="modal" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);" *ngIf="showModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">{{ isEditMode ? 'Edit' : 'Add' }} Product</h5>
+        <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="closeModal()"></button>
+      </div>
+      <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+          <div class="modal-body">
+            
+            <div class="mb-3">
+              <label for="productName" class="form-label">Product Name</label>
+              <input type="text" class="form-control" id="productName" formControlName="productName"
+                     [ngClass]="{'is-invalid': productForm.get('productName')?.invalid && productForm.get('productName')?.touched}">
+              <div class="invalid-feedback">
+                Product Name is required and must be at least 10 characters.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="productType" class="form-label">Product Type</label>
+              <select class="form-select" id="productType" formControlName="productType">
+                  @for (type of productTypes; track type.value) {
+                      <option [value]="type.value">{{ type.name }}</option>
+                  }
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" rows="3" formControlName="description"
+                        [ngClass]="{'is-invalid': productForm.get('description')?.invalid && productForm.get('description')?.touched}"></textarea>
+              <div class="invalid-feedback">
+                Description is required.
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+            <button type="submit" class="btn btn-primary" [disabled]="productForm.invalid || isLoading">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                {{ isLoading ? 'Saving...' : (isEditMode ? 'Update' : 'Save') }}
+            </button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>

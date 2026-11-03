@@ -1,0 +1,160 @@
+<div class="container mt-4 mb-5">
+  <div class="card shadow border-0 rounded-3">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+      <div>
+        <h4 class="mb-0 fw-bold">Claim History & Audit Log</h4>
+        <small class="text-white-50">Permanent regulatory audit trail of claim decisions, updater remarks, and evidence</small>
+      </div>
+      <span class="badge bg-light text-primary px-3 py-2 fw-semibold fs-6">
+        Total Logs: {{ history.length }}
+      </span>
+    </div>
+
+    <div class="card-body p-0">
+      <!-- Filter Bar -->
+      <div class="p-3 bg-light border-bottom">
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-5">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">🔍</span>
+              <input type="text" [(ngModel)]="searchText" class="form-control border-start-0" placeholder="Search by Claim ID, remarks, updater...">
+              @if (searchText) {
+                <button class="btn btn-outline-secondary border-start-0 bg-white" (click)="searchText = ''">✕</button>
+              }
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3">
+            <select class="form-select" [(ngModel)]="selectedStatus">
+              <option value="All">All Status</option>
+              <option value="0">Pending</option>
+              <option value="1">Approved</option>
+              <option value="2">Rejected</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 140px;">Claim No.</th>
+              <th style="width: 130px;">Status</th>
+              <th>Audit Remarks</th>
+              <th style="width: 160px;">Updated By</th>
+              <th class="text-center" style="width: 120px;">Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of getFilteredHistory(); track h.historyId) {
+            <tr>
+              <td class="text-nowrap fw-bold">
+                <span class="badge bg-secondary-subtle text-dark border font-monospace px-2 py-1">
+                  CLM-{{ h.claimId }}
+                </span>
+              </td>
+              <td>
+                <span class="badge px-2 py-1" [ngClass]="getStatus(h).badgeClass">
+                  {{ getStatus(h).label }}
+                </span>
+              </td>
+              <td>
+                <div class="fw-medium text-dark">{{ h.remarks }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-secondary border px-2 py-1">{{ h.updatedBy || 'System / Admin' }}</span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 px-3 py-1 shadow-sm" (click)="openDocsModal(h)" title="View attached evidence">
+                  <span>📄</span>
+                  <span class="fw-medium">View</span>
+                </button>
+              </td>
+            </tr>
+            }
+            @if (getFilteredHistory().length === 0) {
+            <tr>
+              <td colspan="5" class="text-center py-5 text-muted">
+                <div class="fs-4 mb-2">🔍</div>
+                <div>No history logs found.</div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card-footer bg-white border-top py-3 text-muted small d-flex justify-content-between align-items-center">
+      <span>Database Source: <code>CapStoneDB.dbo.ClaimHistories</code></span>
+      <span>Showing {{ getFilteredHistory().length }} of {{ history.length }} entries</span>
+    </div>
+  </div>
+</div>
+
+<!-- Supporting Documents Modal -->
+@if (selectedDocsClaim) {
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px);">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      <div class="modal-header bg-primary text-white py-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-5">📁</span>
+          <h5 class="modal-title mb-0 fw-bold">
+            Evidence Dossier — Claim #{{ selectedDocsClaim.claimId }}
+          </h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" (click)="closeDocsModal()"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light">
+        @if (isLoadingDocs) {
+          <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted small mt-2 mb-0">Loading documents...</p>
+          </div>
+        } @else if (docsError) {
+          <div class="alert alert-danger">{{ docsError }}</div>
+        } @else if (claimDocuments.length === 0) {
+          <div class="text-center py-4 text-muted bg-white rounded-3 shadow-sm">
+            <div class="fs-3 mb-1">📄</div>
+            <div>No supporting documents found for this claim.</div>
+          </div>
+        } @else {
+          <div class="row g-3">
+            @for (doc of claimDocuments; track doc.documentId) {
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100 rounded-3 bg-white p-3">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                  <span class="fs-4">📄</span>
+                  <div class="flex-grow-1 text-truncate">
+                    <strong class="d-block text-dark text-truncate" [title]="doc.documentName">{{ doc.documentName || 'Supporting_Document' }}</strong>
+                    <small class="text-muted">Uploaded: {{ doc.uploadedDate | date:'dd MMM yyyy HH:mm' }}</small>
+                  </div>
+                </div>
+
+                @if (isUrl(doc.field)) {
+                  <div class="mt-2 text-center bg-light rounded p-2">
+                    <a [href]="doc.field" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                      <span>👁️</span> <span>Inspect Full Document</span>
+                    </a>
+                  </div>
+                } @else {
+                  <div class="alert alert-light border small text-muted text-truncate mt-2 mb-0">
+                    Ref: {{ doc.field }}
+                  </div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer bg-white py-3 border-top">
+        <button type="button" class="btn btn-secondary px-4" (click)="closeDocsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+}

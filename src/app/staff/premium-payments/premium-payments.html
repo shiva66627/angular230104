@@ -1,0 +1,90 @@
+<div class="container mt-4">
+  <div class="card shadow">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Premium Payments Directory</h4>
+      <a routerLink="/staff/dashboard" class="btn btn-sm btn-light fw-medium">← Operations Desk</a>
+    </div>
+    <div class="card-body p-0">
+      <!-- Filter Bar -->
+      <div class="p-3 bg-light border-bottom">
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">🔍</span>
+              <input type="text" [(ngModel)]="searchText" class="form-control border-start-0" placeholder="Search by Payment ID, Policy, Customer...">
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <select class="form-select" [(ngModel)]="selectedStatus">
+              <option value="All">All Status</option>
+              <option value="1">Success</option>
+              <option value="0">Failed</option>
+              <option value="2">Pending</option>
+            </select>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <select class="form-select" [(ngModel)]="sortBy">
+              <option value="default">Default Sort</option>
+              <option value="date-desc">Payment Date: Newest First</option>
+              <option value="date-asc">Payment Date: Oldest First</option>
+              <option value="amount-desc">Amount: High to Low</option>
+              <option value="amount-asc">Amount: Low to High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Payment ID</th>
+              <th>Customer</th>
+              <th>Policy ID</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Method</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of getFilteredPayments(); track p.paymentId) {
+            <tr>
+              <td>PAY-{{ p.paymentId }}</td>
+              <td>
+                {{ p.customerName || 'N/A' }}
+                @if (p.customerId) {
+                  <small class="text-secondary">(CUS-{{ p.customerId }})</small>
+                }
+              </td>
+              <td>POL-{{ p.policyId }}</td>
+              <td>{{ p.amount | currency:'INR' }}</td>
+              <td>{{ p.paymentDate | date:'dd-MM-yyyy HH:mm' }}</td>
+              <td>
+                @if (p.paymentStatus === 1) { <span class="badge bg-success">Success</span> }
+                @else if (p.paymentStatus === 0) { <span class="badge bg-danger">Failed</span> }
+                @else { <span class="badge bg-warning text-dark">Pending</span> }
+              </td>
+              <td>
+                @if (p.paymentMode === 0) { UPI }
+                @else if (p.paymentMode === 1) { Card }
+                @else if (p.paymentMode === 2) { NetBanking }
+                @else { Cash }
+              </td>
+            </tr>
+            }
+            @if (getFilteredPayments().length === 0) {
+            <tr>
+              <td colspan="7" class="text-center p-3 text-muted">No premium payments found.</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white border-top py-3">
+      <small class="text-muted">
+        Showing {{ getFilteredPayments().length }} of {{ payments.length }} records
+      </small>
+    </div>
+  </div>
+</div>

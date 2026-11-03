@@ -1,0 +1,97 @@
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">User Management</h3>
+        </div>
+        <div class="card-body p-0">
+            <!-- Filter Bar -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0">🔍</span>
+                            <input type="text" class="form-control border-start-0" placeholder="Search by name, email, mobile or ID..." [(ngModel)]="searchTerm">
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <select class="form-select" [(ngModel)]="selectedRole">
+                            <option value="All">All Roles</option>
+                            <option value="0">Admin</option>
+                            <option value="1">Staff</option>
+                            <option value="2">Customer</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive p-3">
+                <table class="table table-bordered table-hover table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Mobile Number</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (u of filteredUsers; track u.userId) {
+                        <tr>
+                            <td>USR-{{ u.userId }}</td>
+                            <td>{{ u.fullName }}</td>
+                            <td>{{ u.email }}</td>
+                            <td>{{ u.mobileNumber }}</td>
+                            <td>
+                                @if (u.role == Role.Admin) { <span class="badge bg-danger">Admin</span> }
+                                @else if (u.role == Role.Staff) { <span class="badge bg-warning text-dark">Staff</span> }
+                                @else { <span class="badge bg-info text-dark">Customer</span> }
+                            </td>
+                            <td>
+                                @if (u.activeStatus == ActiveStatus.Active) {
+                                    <span class="badge bg-success">Active</span>
+                                } @else {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                @if (u.role == Role.Customer) {
+                                    <button class="btn btn-sm btn-outline-primary me-2" (click)="promoteToStaff(u.email)" [disabled]="isProcessing">
+                                        Promote to Staff
+                                    </button>
+                                }
+                                @if (u.role == Role.Staff) {
+                                    <button class="btn btn-sm btn-outline-warning me-2" (click)="demoteToCustomer(u.email)" [disabled]="isProcessing">
+                                        Demote to Customer
+                                    </button>
+                                }
+                                @if (u.activeStatus == ActiveStatus.Active) {
+                                    <button class="btn btn-sm btn-outline-danger" (click)="deactivateUser(u.userId)" [disabled]="isProcessing">
+                                        Deactivate
+                                    </button>
+                                } @else {
+                                    <button class="btn btn-sm btn-outline-success" (click)="activateUser(u.userId)" [disabled]="isProcessing">
+                                        Activate
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                        }
+                        @if (filteredUsers.length === 0) {
+                        <tr>
+                            <td colspan="7" class="text-center p-3 text-muted">No users found.</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-top py-3">
+            <small class="text-muted">
+                Showing {{ filteredUsers.length }} of {{ users.length }} records
+            </small>
+        </div>
+    </div>
+</div>

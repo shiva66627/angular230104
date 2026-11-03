@@ -1,0 +1,232 @@
+<div class="login-page">
+  <!-- Left Side: Insurance Brand & Trust Showcase -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <!-- Brand Header -->
+      <div class="brand-pill mb-4">
+        <span class="shield-badge">🛡️</span>
+        <span class="brand-pill-text">SafeInsure Protection Platform</span>
+      </div>
+
+      <div class="hero-title-group mb-4">
+        <h1 class="hero-title">Protect What Matters Most.</h1>
+        <p class="hero-subtitle">
+          Your unified portal for policy management, cashless claim tracking, and instant insurance settlements.
+        </p>
+      </div>
+
+      <!-- 4 Pillars of Insurance Protection -->
+      <div class="insurance-pillars mb-4">
+        <div class="pillar-card">
+          <div class="pillar-icon bg-warning-subtle">🚗</div>
+          <div class="pillar-info">
+            <strong>Motor & Vehicle</strong>
+            <small>Cashless garage network & 24/7 roadside aid</small>
+          </div>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon bg-success-subtle">🏥</div>
+          <div class="pillar-info">
+            <strong>Health & Mediclaim</strong>
+            <small>10,000+ hospital network with cashless care</small>
+          </div>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon bg-primary-subtle">🛡️</div>
+          <div class="pillar-info">
+            <strong>Term & Life Shield</strong>
+            <small>Comprehensive financial protection for families</small>
+          </div>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon bg-info-subtle">✈️</div>
+          <div class="pillar-info">
+            <strong>Travel Protection</strong>
+            <small>Single-trip flight, medical & baggage cover</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust Metrics Bar -->
+      <div class="trust-metrics">
+        <div class="metric-item">
+          <span class="metric-number">99.4%</span>
+          <span class="metric-label">Claim Settlement</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-number">10,000+</span>
+          <span class="metric-label">Network Hospitals</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-item">
+          <span class="metric-number">24/7</span>
+          <span class="metric-label">Claims Assistance</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Clean Modern Login Card -->
+  <div class="form-section">
+    <div class="login-card">
+
+      <ng-container *ngIf="!isOtpStep; else loginOtpTemplate">
+        <!-- Form Header -->
+        <div class="form-header text-center mb-4">
+          <div class="login-logo-box mx-auto mb-3">
+            <img src="logo.png" alt="Safe Insurance Logo" class="login-logo">
+          </div>
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill small fw-semibold mb-2 d-inline-block">
+            🔒 Secure Access Portal
+          </span>
+          <h2 class="fw-bold text-dark mb-1">Welcome Back</h2>
+          <p class="text-muted small mb-0">Sign in to manage your policies, claims & premiums</p>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <!-- Info Message -->
+          <div class="alert alert-info py-2 px-3 small rounded-3 d-flex align-items-center gap-2 mb-3" *ngIf="infoMessage">
+            <span>ℹ️</span>
+            <span>{{ infoMessage }}</span>
+          </div>
+
+          <!-- Error Message with Inline OTP verification if unverified -->
+          <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3" *ngIf="errorMessage">
+            <div class="d-flex align-items-center gap-2">
+              <span>⚠️</span>
+              <span>{{ errorMessage }}</span>
+            </div>
+            <button
+              *ngIf="needsEmailVerification"
+              type="button"
+              class="btn btn-sm btn-danger mt-2 w-100 fw-semibold"
+              (click)="openOtpVerification()">
+              Send & Verify OTP Now
+            </button>
+          </div>
+
+          <!-- Email Field -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-secondary mb-1">Email Address</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0 text-muted">✉️</span>
+              <input
+                type="email"
+                class="form-control border-start-0"
+                placeholder="name@example.com"
+                formControlName="email">
+            </div>
+            <small class="text-danger small mt-1 d-block" *ngIf="loginForm.controls.email.touched && loginForm.controls.email.invalid">
+              Please enter a valid email address.
+            </small>
+          </div>
+
+          <!-- Password Field -->
+          <div class="mb-4">
+            <label class="form-label small fw-semibold text-secondary mb-1">Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0 text-muted">🔒</span>
+              <input
+                type="password"
+                class="form-control border-start-0"
+                placeholder="Enter your account password"
+                formControlName="password">
+            </div>
+            <small class="text-danger small mt-1 d-block" *ngIf="loginForm.controls.password.touched && loginForm.controls.password.invalid">
+              Password is required.
+            </small>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm submit-btn d-flex justify-content-center align-items-center gap-2" [disabled]="loginForm.invalid || isLoading">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>{{ isLoading ? 'Authenticating...' : 'Sign In to Safe Insurance ' }}</span>
+          </button>
+
+          <!-- Register Link -->
+          <div class="text-center mt-4 pt-2 border-top">
+            <p class="text-muted small mb-0">
+              New to SafeInsure?
+              <a routerLink="/register" class="fw-bold text-primary text-decoration-none ms-1">Create an Account →</a>
+            </p>
+          </div>
+
+          <!-- Regulatory Security Footer -->
+          <div class="security-footer text-center mt-4">
+            <small class="text-muted d-inline-flex align-items-center gap-1" style="font-size: 0.73rem;">
+              <span>🛡️</span>
+              <span>256-Bit SSL Encrypted • Regulated Insurance Services</span>
+            </small>
+          </div>
+        </form>
+      </ng-container>
+
+      <!-- Inline OTP Verification View -->
+      <ng-template #loginOtpTemplate>
+        <div class="form-header text-center mb-4">
+          <div class="login-logo-box mx-auto mb-3">
+            <img src="logo.png" alt="Safe Insurance Logo" class="login-logo">
+          </div>
+          <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-1 rounded-pill small fw-semibold mb-2 d-inline-block">
+            🔑 Security Verification
+          </span>
+          <h2 class="fw-bold text-dark mb-1">Verify Your Email</h2>
+          <p class="text-muted small mb-0">
+            Enter the 6-digit verification code sent to:<br>
+            <strong class="text-primary">{{ loginForm.value.email }}</strong>
+          </p>
+        </div>
+
+        <form [formGroup]="otpForm" (ngSubmit)="onVerifyOtp()">
+          <div class="alert alert-info py-2 px-3 small rounded-3 mb-3" *ngIf="infoMessage">
+            {{ infoMessage }}
+          </div>
+
+          <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-secondary mb-1">6-Digit Security OTP</label>
+            <input
+              type="text"
+              class="form-control otp-input-field text-center font-monospace fw-bold"
+              maxlength="6"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              placeholder="••••••"
+              formControlName="otp">
+            <small class="text-danger small mt-1 d-block" *ngIf="otpForm.controls.otp.touched && otpForm.controls.otp.invalid">
+              Please enter the 6-digit numeric OTP.
+            </small>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm submit-btn mb-2 d-flex justify-content-center align-items-center gap-2" [disabled]="otpForm.invalid || isLoading">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>{{ isLoading ? 'Verifying Code...' : 'Verify & Sign In' }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary w-100 py-2 small fw-semibold"
+            (click)="onResendOtp()"
+            [disabled]="isResending || resendCooldown > 0">
+            <span *ngIf="isResending" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            {{ isResending ? 'Sending OTP...' : (resendCooldown > 0 ? 'Resend code in ' + resendCooldown + 's' : 'Resend Security Code') }}
+          </button>
+
+          <div class="text-center mt-3 pt-2">
+            <a href="javascript:void(0)" (click)="backToLogin()" class="small text-muted text-decoration-none">
+              ← Back to Sign In
+            </a>
+          </div>
+        </form>
+      </ng-template>
+
+    </div>
+  </div>
+</div>

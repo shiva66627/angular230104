@@ -1,0 +1,122 @@
+<div class="container mt-4">
+  <div class="card shadow" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">{{ isExisting ? 'My Profile' : 'Complete Your Profile' }}</h3>
+      <a routerLink="/customer/dashboard" class="btn btn-outline-light btn-sm">
+        ← Back to Dashboard
+      </a>
+    </div>
+    <div class="card-body">
+      
+      <div *ngIf="message" class="alert" [ngClass]="isSuccess ? 'alert-success' : 'alert-danger'">
+        {{ message }}
+      </div>
+
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div class="row g-3">
+          
+          <!-- Profile Photo Section -->
+          <div class="col-12 text-center mb-3">
+            <div class="profile-photo-wrapper d-inline-block">
+              <div class="profile-photo-container" (click)="photoInput.click()">
+                <img *ngIf="photoUrl" [src]="photoUrl" alt="Profile Photo" class="profile-photo-preview">
+                <div *ngIf="!photoUrl" class="profile-photo-placeholder">
+                  <i class="bi bi-person-fill"></i>
+                </div>
+                <div class="profile-photo-overlay">
+                  <i class="bi bi-camera-fill"></i>
+                  <span>Upload</span>
+                </div>
+              </div>
+              <input type="file" #photoInput class="d-none" accept="image/*" (change)="onPhotoSelected($event)">
+              <button type="button" *ngIf="photoUrl" class="btn btn-sm btn-outline-danger mt-2" (click)="removePhoto()">
+                Remove Photo
+              </button>
+
+              <div class="user-profile-title mt-2">
+                <h4 class="mb-0 fw-bold text-dark">{{ customerName || 'Valued Customer' }}</h4>
+                <p class="text-muted small mb-0">{{ customerEmail }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" [value]="customerName" readonly style="background-color: #f8fafc; font-weight: 500; cursor: not-allowed;">
+            <small class="text-muted">Registered account name</small>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-control" [value]="customerEmail" readonly style="background-color: #f8fafc; font-weight: 500; cursor: not-allowed;">
+            <small class="text-muted">Registered email address</small>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" class="form-control" formControlName="dateOfBirth" [max]="maxDobDate"
+              [ngClass]="{'is-invalid': profileForm.get('dateOfBirth')?.invalid && profileForm.get('dateOfBirth')?.touched}">
+            <div *ngIf="profileForm.get('dateOfBirth')?.touched && profileForm.get('dateOfBirth')?.invalid" class="text-danger mt-1 small">
+              <span *ngIf="profileForm.get('dateOfBirth')?.errors?.['required']">Date of Birth is required.</span>
+              <span *ngIf="profileForm.get('dateOfBirth')?.errors?.['futureDate']">Date of Birth cannot be in the future.</span>
+              <span *ngIf="profileForm.get('dateOfBirth')?.errors?.['underAge']">Customer must be at least 18 years old.</span>
+            </div>
+            <small class="text-muted d-block mt-1">Must be 18 years or older</small>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" formControlName="city">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Mobile Number</label>
+            <input type="text" class="form-control" formControlName="mobileNumber" maxlength="10" placeholder="Enter 10-digit mobile number"
+              [ngClass]="{'is-invalid': profileForm.get('mobileNumber')?.invalid && profileForm.get('mobileNumber')?.touched}">
+            <div class="invalid-feedback">
+              <span *ngIf="profileForm.get('mobileNumber')?.errors?.['required']">Mobile Number is required.</span>
+              <span *ngIf="profileForm.get('mobileNumber')?.errors?.['pattern']">Enter a valid 10-digit mobile number.</span>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">Address</label>
+            <input type="text" class="form-control" formControlName="address">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">State</label>
+            <input type="text" class="form-control" formControlName="state">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Pincode</label>
+            <input type="text" class="form-control" formControlName="pincode">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Nominee Name</label>
+            <input type="text" class="form-control" formControlName="nomineeName"
+              [ngClass]="{'is-invalid': profileForm.get('nomineeName')?.invalid && profileForm.get('nomineeName')?.touched}">
+            <div class="invalid-feedback">
+              <span *ngIf="profileForm.get('nomineeName')?.errors?.['required']">Nominee Name is required.</span>
+              <span *ngIf="profileForm.get('nomineeName')?.errors?.['minlength']">Nominee Name must be at least 10 characters.</span>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Nominee Relation</label>
+            <input type="text" class="form-control" formControlName="nomineeRelation">
+          </div>
+
+          <div class="col-12 mt-4 text-end">
+            <button type="submit" class="btn btn-primary px-4" [disabled]="profileForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              {{ isLoading ? 'Saving...' : (isExisting ? 'Update Profile' : 'Save Profile') }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

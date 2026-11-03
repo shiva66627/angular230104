@@ -1,0 +1,293 @@
+/* Insurance Themed Login Styles */
+:host {
+  display: block;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #f8fafc;
+}
+
+.login-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* =========================================
+   Left Hero Side: Insurance & Trust Identity
+   ========================================= */
+.hero-section {
+  flex: 1.15;
+  background: linear-gradient(135deg, #061a38 0%, #0d3b66 50%, #0052cc 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff;
+  padding: 60px 50px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle ambient decorative circle */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(0, 168, 255, 0.25) 0%, rgba(0,0,0,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  bottom: -15%;
+  left: -15%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(67, 100, 247, 0.2) 0%, rgba(0,0,0,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-content {
+  max-width: 540px;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e0f2fe;
+}
+
+.hero-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.hero-subtitle {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+/* 4 Insurance Coverage Pillars */
+.insurance-pillars {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.pillar-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  transition: all 0.25s ease;
+}
+
+.pillar-card:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.pillar-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.pillar-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.pillar-info strong {
+  font-size: 0.92rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.pillar-info small {
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.3;
+}
+
+/* Trust Metrics Bar */
+.trust-metrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.metric-number {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #67e8f9;
+}
+
+.metric-label {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.metric-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* =========================================
+   Right Side: Clean Login Form
+   ========================================= */
+.form-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 50px 40px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-logo-box {
+  width: 72px;
+  height: 72px;
+}
+
+.login-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(0, 82, 204, 0.18);
+  border: 2px solid #e2e8f0;
+}
+
+.input-group-text {
+  font-size: 1rem;
+}
+
+.form-control {
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  border-color: #cbd5e1;
+  border-radius: 8px;
+}
+
+.form-control:focus {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #0052cc 0%, #0284c7 100%);
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 82, 204, 0.35);
+}
+
+.submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.otp-input-field {
+  letter-spacing: 8px;
+  font-size: 1.5rem;
+  padding: 10px;
+  border-color: #0052cc;
+  background-color: #f8fafc;
+}
+
+.security-footer {
+  color: #64748b;
+}
+
+/* =========================================
+   Responsive Breakpoints
+   ========================================= */
+@media (max-width: 992px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .hero-section {
+    padding: 50px 24px;
+    text-align: center;
+  }
+
+  .brand-pill {
+    margin: 0 auto 16px auto;
+  }
+
+  .hero-title {
+    font-size: 2.2rem;
+  }
+
+  .insurance-pillars {
+    grid-template-columns: 1fr;
+  }
+
+  .form-section {
+    padding: 40px 20px;
+  }
+}

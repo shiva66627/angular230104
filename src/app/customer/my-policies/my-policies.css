@@ -1,0 +1,147 @@
+/* My Policies Styling */
+.card {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #0052cc 0%, #003380 100%) !important;
+  padding: 1.25rem 1.5rem;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.9rem 1rem;
+}
+
+.table td {
+  padding: 0.9rem 1rem;
+  vertical-align: middle;
+}
+
+.modal-body-screen-scroll {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Official Policy Certificate Styling */
+.certificate-wrapper {
+  background: #ffffff;
+  border: 3px double #1e3a8a;
+  border-radius: 6px;
+  padding: 2.2rem;
+  position: relative;
+  color: #1e293b;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.watermark-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 4.5rem;
+  font-weight: 900;
+  color: rgba(30, 58, 138, 0.04);
+  letter-spacing: 0.2em;
+  pointer-events: none;
+  white-space: nowrap;
+  user-select: none;
+  z-index: 1;
+}
+
+.cert-header {
+  border-bottom: 2px solid #1e3a8a;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.cert-stamp {
+  width: 90px;
+  height: 90px;
+  border: 2px dashed #1e3a8a;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 auto;
+}
+
+/* Print Specific Rules (Approach C) */
+@media print {
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Completely unwrap the Bootstrap modal and overflow containers */
+  .modal,
+  .modal-dialog,
+  .modal-content,
+  .modal-body,
+  .modal-body-screen-scroll {
+    position: static !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #policy-certificate-print-area,
+  #policy-certificate-print-area * {
+    visibility: visible !important;
+  }
+
+  #policy-certificate-print-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: 3px double #1e3a8a !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .no-print,
+  .modal-header,
+  .modal-footer,
+  .modal-backdrop,
+  nav,
+  footer {
+    display: none !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+}

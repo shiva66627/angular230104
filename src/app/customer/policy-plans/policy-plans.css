@@ -1,0 +1,109 @@
+/* Customer Policy Plans Styling */
+.plan-card {
+  border-radius: 16px;
+  background: #ffffff;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.plan-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 30px rgba(0, 98, 255, 0.12) !important;
+  border-color: #93c5fd;
+}
+
+.plan-title {
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.metric-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.metric-caption {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+}
+
+.purchase-btn {
+  background: linear-gradient(135deg, #0062ff 0%, #004ecc 100%);
+  border: none;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.purchase-btn:hover {
+  background: linear-gradient(135deg, #0052d4 0%, #003fa8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 98, 255, 0.3);
+}
+
+.category-tab-btn {
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.category-tab-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Modal Overlay & Card Styling */
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  padding: 1rem;
+}
+
+.purchase-modal-card {
+  background: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
+/* Vehicle Choice Card Styling */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.vehicle-choice-card {
+  transition: all 0.2s ease-in-out;
+  border-width: 2px !important;
+}
+
+.vehicle-choice-card:hover {
+  transform: translateY(-2px);
+  border-color: #0062ff !important;
+}
+
+.hover-bg-light:hover {
+  background-color: #f1f5f9 !important;
+}

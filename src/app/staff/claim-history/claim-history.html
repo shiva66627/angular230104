@@ -1,0 +1,185 @@
+<div class="container mt-4 mb-5">
+  <div class="card shadow border-0 rounded-3">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+      <div>
+        <h4 class="mb-0 fw-bold">Claim Status History & Audit Trail</h4>
+        <small class="text-white-50">Review historical claims, inspect staff & admin remarks, and verify documents</small>
+      </div>
+      <a routerLink="/staff/dashboard" class="btn btn-sm btn-light fw-medium">← Operations Desk</a>
+    </div>
+
+    <div class="card-body p-0">
+      <!-- Filter Bar -->
+      <div class="p-3 bg-light border-bottom">
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-5">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">🔍</span>
+              <input type="text" [(ngModel)]="searchText" class="form-control border-start-0" placeholder="Search by Claim ID, Customer, Policy, Remarks...">
+              @if (searchText) {
+                <button class="btn btn-outline-secondary border-start-0 bg-white" (click)="searchText = ''">✕</button>
+              }
+            </div>
+          </div>
+          <div class="col-md-4 col-lg-3">
+            <select class="form-select" [(ngModel)]="selectedStatus">
+              <option value="All">All Status</option>
+              <option value="0">Pending</option>
+              <option value="1">Approved</option>
+              <option value="2">Rejected</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Claim No.</th>
+              <th>Customer</th>
+              <th>Current Status</th>
+              <th>Staff Remarks</th>
+              <th>Admin Remarks</th>
+              <th>Incident Date</th>
+              <th class="text-center">Documents</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of getFilteredClaims(); track c.claimId) {
+            <tr>
+              <td class="text-nowrap fw-semibold">
+                <span class="badge bg-secondary-subtle text-dark border font-monospace">
+                  CLM-{{ c.claimNumber || c.claimId }}
+                </span>
+              </td>
+              <td>{{ c.customerName || 'N/A' }}</td>
+              <td>
+                <span class="badge px-2 py-1" [ngClass]="{
+                  'bg-warning text-dark': c.claimStatus === 0,
+                  'bg-success': c.claimStatus === 1,
+                  'bg-danger': c.claimStatus === 2
+                }">{{ claimStatus[c.claimStatus] }}</span>
+              </td>
+              <td>
+                <div class="small text-muted text-truncate" style="max-width: 180px;" [title]="c.agentRemarks || 'None'">
+                  {{ c.agentRemarks || 'None' }}
+                </div>
+              </td>
+              <td>
+                <div class="small text-muted text-truncate" style="max-width: 180px;" [title]="c.adminRemarks || 'None'">
+                  {{ c.adminRemarks || 'None' }}
+                </div>
+              </td>
+              <td>{{ c.incidentDate | date:'dd-MM-yyyy' }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 px-2 py-1" (click)="openDocsModal(c)" title="View attached evidence">
+                  <span>📄</span>
+                  <span class="fw-medium">View</span>
+                </button>
+              </td>
+            </tr>
+            }
+            @if (getFilteredClaims().length === 0) {
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <div class="fs-4 mb-2">🔍</div>
+                <div>No claim history found.</div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card-footer bg-white border-top py-3 text-muted small d-flex justify-content-between align-items-center">
+      <span>Operations Historical Audit Trail</span>
+      <span>Showing {{ getFilteredClaims().length }} of {{ claims.length }} records</span>
+    </div>
+  </div>
+</div>
+
+<!-- Supporting Documents Modal -->
+@if (selectedDocsClaim) {
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px);">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      <div class="modal-header bg-dark text-white py-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-5">📁</span>
+          <h5 class="modal-title mb-0 fw-bold">
+            Supporting Evidence — CLM-{{ selectedDocsClaim.claimNumber || selectedDocsClaim.claimId }}
+          </h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" (click)="closeDocsModal()"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light">
+        <div class="card border-0 shadow-sm p-3 mb-3 bg-white rounded-3">
+          <div class="row g-2 small">
+            <div class="col-md-4">
+              <span class="text-muted">Customer:</span>
+              <strong class="text-dark d-block">{{ selectedDocsClaim.customerName || 'N/A' }}</strong>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted">Policy Number:</span>
+              <strong class="text-dark d-block font-monospace">POL-{{ selectedDocsClaim.policyNumber || selectedDocsClaim.policyId }}</strong>
+            </div>
+            <div class="col-md-4">
+              <span class="text-muted">Claim Amount:</span>
+              <strong class="text-primary d-block fs-6">₹{{ selectedDocsClaim.claimAmount | number }}</strong>
+            </div>
+          </div>
+        </div>
+
+        @if (isLoadingDocs) {
+          <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted small mt-2 mb-0">Loading documents...</p>
+          </div>
+        } @else if (docsError) {
+          <div class="alert alert-danger">{{ docsError }}</div>
+        } @else if (claimDocuments.length === 0) {
+          <div class="text-center py-4 text-muted bg-white rounded-3">
+            <div class="fs-3 mb-1">📄</div>
+            <div>No supporting documents found for this claim.</div>
+          </div>
+        } @else {
+          <div class="row g-3">
+            @for (doc of claimDocuments; track doc.documentId) {
+            <div class="col-md-6">
+              <div class="card border-0 shadow-sm h-100 rounded-3 bg-white p-3">
+                <div class="d-flex align-items-start gap-2 mb-2">
+                  <span class="fs-4">📄</span>
+                  <div class="flex-grow-1 text-truncate">
+                    <strong class="d-block text-dark text-truncate" [title]="doc.documentName">{{ doc.documentName || 'Supporting_Document' }}</strong>
+                    <small class="text-muted">Uploaded: {{ doc.uploadedDate | date:'dd MMM yyyy HH:mm' }}</small>
+                  </div>
+                </div>
+
+                @if (isUrl(doc.field)) {
+                  <div class="mt-2 text-center bg-light rounded p-2">
+                    <a [href]="doc.field" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                      <span>👁️</span> <span>Inspect Full Document</span>
+                    </a>
+                  </div>
+                } @else {
+                  <div class="alert alert-light border small text-muted text-truncate mt-2 mb-0">
+                    Ref: {{ doc.field }}
+                  </div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer bg-white py-3 border-top">
+        <button type="button" class="btn btn-secondary px-4" (click)="closeDocsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+}

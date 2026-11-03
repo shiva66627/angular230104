@@ -1,0 +1,15 @@
+.text-break {
+  word-break: break-all;
+  max-width: 360px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+a.text-primary {
+  transition: color 0.15s ease;
+}
+
+a.text-primary:hover {
+  color: #0b5ed7 !important;
+  text-decoration: underline !important;
+}

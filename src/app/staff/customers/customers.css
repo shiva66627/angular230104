@@ -1,0 +1,33 @@
+.customer-avatar-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.customer-avatar-thumb:hover {
+  transform: scale(1.08);
+}
+
+.customer-avatar-thumb-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 auto;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.customer-avatar-thumb-placeholder:hover {
+  background-color: #cbd5e1;
+}
+

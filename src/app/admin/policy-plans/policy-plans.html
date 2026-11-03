@@ -1,0 +1,236 @@
+<div class="container mt-4 mb-5">
+  <div class="card shadow border-0 rounded-3">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+      <div>
+        <h4 class="mb-0 fw-bold">Policy Plans Management</h4>
+        <small class="text-white-50">Configure underwriting plans, coverage benefits, premium schedules, and tenures</small>
+      </div>
+      <button class="btn btn-light fw-semibold" (click)="openAdd()">+ Add Plan</button>
+    </div>
+    <div class="card-body p-0">
+      <!-- Filter Bar -->
+      <div class="p-3 bg-light border-bottom">
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">🔍</span>
+              <input type="text" [(ngModel)]="searchText" class="form-control border-start-0" placeholder="Search by Plan Name, Product name, ID...">
+              @if (searchText) {
+                <button class="btn btn-outline-secondary border-start-0 bg-white" (click)="searchText = ''">✕</button>
+              }
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <select class="form-select" [(ngModel)]="selectedStatus">
+              <option value="All">All Status</option>
+              <option value="1">Available</option>
+              <option value="0">Not Available</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive p-3">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Plan No</th>
+              <th>Plan Name</th>
+              <th>Underlying Product</th>
+              <th>Coverage (Sum Insured)</th>
+              <th>Premium Amount</th>
+              <th>Premium Frequency</th>
+              <th>Duration / Validity</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of getFilteredPlans(); track p.planId) {
+            <tr>
+              <td class="text-nowrap font-monospace fw-bold">
+                <span class="badge bg-secondary-subtle text-dark border">PLN-{{ p.planId }}</span>
+              </td>
+              <td class="fw-bold text-dark">{{ p.planName }}</td>
+              <td>
+                <div class="fw-medium text-primary">{{ p.productName || getProductName(p.productId) }}</div>
+                @if (isTravelPlan(p)) {
+                  <span class="badge bg-warning-subtle text-dark border py-0" style="font-size: 0.72rem;">✈️ Travel Plan</span>
+                }
+              </td>
+              <td>
+                <span class="fw-bold text-success fs-6">₹{{ p.coverageAmount | number }}</span>
+              </td>
+              <td>
+                <span class="fw-bold text-dark">₹{{ p.premiumAmount | number }}</span>
+              </td>
+              <td>
+                @if (isTravelPlan(p)) {
+                  <span class="badge bg-warning-subtle text-dark border px-2 py-1">
+                    One-Time (Per Trip)
+                  </span>
+                } @else {
+                  <span class="badge bg-light text-dark border px-2 py-1">
+                    {{ premiumTypes[p.premiumType]?.name }}
+                  </span>
+                }
+              </td>
+              <td class="text-nowrap">
+                @if (isTravelPlan(p)) {
+                  <span class="badge bg-info-subtle text-info border px-2 py-1">
+                    Single Journey
+                  </span>
+                } @else {
+                  <span class="badge bg-light text-secondary border px-2 py-1">
+                    {{ p.durationYears }} yrs
+                  </span>
+                }
+              </td>
+              <td>
+                @if (p.planStatus === 1) { <span class="badge bg-success px-2 py-1">Available</span> }
+                @else { <span class="badge bg-secondary px-2 py-1">Not Available</span> }
+              </td>
+              <td class="text-nowrap text-end">
+                <button class="btn btn-sm btn-outline-primary me-1 px-2" (click)="openEdit(p)">Edit</button>
+                @if (p.planStatus === 1) {
+                  <button class="btn btn-sm btn-outline-danger px-2" (click)="deactivate(p.planId)">Deactivate</button>
+                } @else {
+                  <button class="btn btn-sm btn-outline-success px-2" (click)="activate(p.planId)">Activate</button>
+                }
+              </td>
+            </tr>
+            }
+            @if (getFilteredPlans().length === 0) {
+            <tr>
+              <td colspan="9" class="text-center py-5 text-muted">
+                <div class="fs-4 mb-2">🔍</div>
+                <div>No policy plans found matching your criteria.</div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer bg-white border-top py-3 text-muted small d-flex justify-content-between align-items-center">
+      <span>Database Source: <code>CapStoneDB.dbo.PolicyPlans</code></span>
+      <span>Showing {{ getFilteredPlans().length }} of {{ plans.length }} plans</span>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+@if (showModal) {
+<div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title mb-0 fw-bold">{{ isEditMode ? 'Edit' : 'Add' }} Policy Plan</h5>
+        <button class="btn-close btn-close-white" (click)="close()"></button>
+      </div>
+      <form [formGroup]="planForm" (ngSubmit)="submit()">
+        <div class="modal-body p-4 bg-light">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label fw-bold">Plan Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="planName" placeholder="e.g. RedBus Express Trip Guard" [ngClass]="{'is-invalid': planForm.get('planName')?.invalid && planForm.get('planName')?.touched}">
+              <div class="invalid-feedback">
+                <span *ngIf="planForm.get('planName')?.errors?.['required']">Plan Name is required.</span>
+                <span *ngIf="planForm.get('planName')?.errors?.['minlength']">Plan Name must be at least 10 characters.</span>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Insurance Product <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="productId" (change)="onProductChange()" [ngClass]="{'is-invalid': planForm.get('productId')?.invalid && planForm.get('productId')?.touched}">
+                <option [ngValue]="null">Select Product</option>
+                @for (prod of products; track prod.productId) {
+                  <option [value]="prod.productId">{{ prod.productName }} (ID: PRD-{{ prod.productId }})</option>
+                }
+              </select>
+              <div class="invalid-feedback">Product is required.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Coverage Amount (₹) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" formControlName="coverageAmount" min="1" placeholder="e.g. 500000"
+                [ngClass]="{'is-invalid': planForm.get('coverageAmount')?.invalid && planForm.get('coverageAmount')?.touched}">
+              <div class="invalid-feedback">
+                <span *ngIf="planForm.get('coverageAmount')?.errors?.['required']">Coverage Amount is required.</span>
+                <span *ngIf="planForm.get('coverageAmount')?.errors?.['min']">Coverage Amount must be greater than 0.</span>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold">
+                {{ isTravelProductSelected() ? 'Trip Premium Fee (₹)' : 'Premium Amount (₹)' }} <span class="text-danger">*</span>
+              </label>
+              <input type="number" class="form-control" formControlName="premiumAmount" min="1" placeholder="e.g. 299"
+                [ngClass]="{'is-invalid': planForm.get('premiumAmount')?.invalid && planForm.get('premiumAmount')?.touched}">
+              <div class="invalid-feedback">
+                <span *ngIf="planForm.get('premiumAmount')?.errors?.['required']">Premium Amount is required.</span>
+                <span *ngIf="planForm.get('premiumAmount')?.errors?.['min']">Premium Amount must be greater than 0.</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Premium Type & Duration Fields -->
+            @if (isTravelProductSelected()) {
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Premium Schedule</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-warning-subtle text-dark border">✈️</span>
+                  <input type="text" class="form-control bg-white text-dark fw-semibold" value="One-Time (Per Trip / Single Journey)" readonly>
+                </div>
+                <small class="text-muted d-block mt-1">Travel insurance is a one-time fee per journey, not recurring EMIs.</small>
+              </div>
+
+              <div class="col-md-12">
+                <div class="p-3 bg-white rounded border d-flex align-items-center justify-content-between">
+                  <div>
+                    <strong class="text-dark d-block">✈️ Travel Coverage Duration: Single Journey / Trip</strong>
+                    <small class="text-muted">Travel policies protect passengers for the specific booked travel dates.</small>
+                  </div>
+                  <span class="badge bg-success-subtle text-success border px-2 py-1">Valid for Journey</span>
+                </div>
+              </div>
+            } @else {
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Premium Frequency <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="premiumType">
+                  @for (t of premiumTypes; track t.value) {
+                    <option [value]="t.value">{{ t.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Policy Tenure (Years) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="durationYears" min="1" placeholder="e.g. 5"
+                  [ngClass]="{'is-invalid': planForm.get('durationYears')?.invalid && planForm.get('durationYears')?.touched}">
+                <div class="invalid-feedback">
+                  <span *ngIf="planForm.get('durationYears')?.errors?.['required']">Duration is required.</span>
+                  <span *ngIf="planForm.get('durationYears')?.errors?.['min']">Duration must be greater than 0.</span>
+                </div>
+              </div>
+            }
+
+            <div class="col-12">
+              <label class="form-label fw-bold">Terms & Conditions <span class="text-danger">*</span></label>
+              <textarea class="form-control" rows="3" formControlName="termsConditions" placeholder="Enter coverage inclusions, baggage loss terms, flight/bus delay coverage..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-white py-3 border-top d-flex justify-content-between">
+          <button type="button" class="btn btn-secondary px-4" (click)="close()">Close</button>
+          <button type="submit" class="btn btn-primary px-4 fw-bold" [disabled]="planForm.invalid || isLoading">
+            @if (isLoading) {
+              <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            }
+            {{ isLoading ? 'Saving...' : (isEditMode ? 'Update Plan' : 'Save Plan') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+}
