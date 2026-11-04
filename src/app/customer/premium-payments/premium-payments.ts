@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PremiumPaymentService } from '../../services/premium-payment';
 import { Customer } from '../../services/customer';
@@ -9,7 +9,7 @@ import { PolicyService } from '../../services/policy';
 @Component({
   selector: 'app-premium-payments',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
   templateUrl: './premium-payments.html',
   styleUrl: './premium-payments.css',
 })
@@ -40,6 +40,58 @@ export class PremiumPayments implements OnInit {
   isSuccess = false;
 
   policyNameMap = new Map<number | string, string>();
+
+  // Payment History Pagination State
+  currentPage: number = 1;
+  pageSize: number = 6;
+
+  get paginatedPayments(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.payments.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.payments.length / this.pageSize) || 1;
+  }
+
+  get startIndex(): number {
+    return this.payments.length > 0 ? (this.currentPage - 1) * this.pageSize + 1 : 0;
+  }
+
+  get endIndex(): number {
+    return Math.min(this.currentPage * this.pageSize, this.payments.length);
+  }
+
+  setPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.cdr.detectChanges();
+    }
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 1;
+    this.cdr.detectChanges();
+  }
+
+  getPageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const pages: number[] = [];
+    const maxVisible = 5;
+
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
 
   paymentModes = [
     { id: 0, label: '⚡ UPI (Google Pay, PhonePe, Paytm, BHIM)', short: 'UPI' },

@@ -36,6 +36,57 @@ export class Claims implements OnInit {
   message = '';
   isSuccess = false;
 
+  // Pagination State
+  currentPage: number = 1;
+  pageSize: number = 10;
+
+  get totalPages(): number {
+    return Math.ceil(this.getFilteredClaims().length / this.pageSize) || 1;
+  }
+
+  get startIndex(): number {
+    return this.getFilteredClaims().length > 0 ? (this.currentPage - 1) * this.pageSize + 1 : 0;
+  }
+
+  get endIndex(): number {
+    return Math.min(this.currentPage * this.pageSize, this.getFilteredClaims().length);
+  }
+
+  get paginatedClaims(): any[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.getFilteredClaims().slice(start, start + this.pageSize);
+  }
+
+  setPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.cdr.detectChanges();
+    }
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 1;
+    this.cdr.detectChanges();
+  }
+
+  onFilterChange() {
+    this.currentPage = 1;
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
   claimStatus: any = {
     0: 'Pending',
     1: 'Approved',

@@ -26,6 +26,60 @@ export class Customers implements OnInit {
   detailedCustomer: ICustomer | null = null;
   isLoading = true;
 
+  // Pagination State
+  currentPage: number = 1;
+  pageSize: number = 10;
+
+  get paginatedCustomers(): ICustomer[] {
+    const list = this.getFilteredCustomers();
+    const start = (this.currentPage - 1) * this.pageSize;
+    return list.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.getFilteredCustomers().length / this.pageSize) || 1;
+  }
+
+  get startIndex(): number {
+    const total = this.getFilteredCustomers().length;
+    return total > 0 ? (this.currentPage - 1) * this.pageSize + 1 : 0;
+  }
+
+  get endIndex(): number {
+    return Math.min(this.currentPage * this.pageSize, this.getFilteredCustomers().length);
+  }
+
+  setPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.cdr.detectChanges();
+    }
+  }
+
+  onPageSizeChange() {
+    this.currentPage = 1;
+    this.cdr.detectChanges();
+  }
+
+  getPageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const pages: number[] = [];
+    const maxVisible = 5;
+
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.loadCustomers();

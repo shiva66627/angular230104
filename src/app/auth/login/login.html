@@ -74,96 +74,277 @@
   <div class="form-section">
     <div class="login-card">
 
-      <ng-container *ngIf="!isOtpStep; else loginOtpTemplate">
-        <!-- Form Header -->
+      <!-- 1. Forgot Password Flow -->
+      <ng-container *ngIf="isForgotPassword; else standardAuthFlow">
         <div class="form-header text-center mb-4">
           <div class="login-logo-box mx-auto mb-3">
             <img src="logo.png" alt="Safe Insurance Logo" class="login-logo">
           </div>
-          <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill small fw-semibold mb-2 d-inline-block">
-            🔒 Secure Access Portal
+          <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-1 rounded-pill small fw-semibold mb-2 d-inline-block">
+            🔑 Password Recovery
           </span>
-          <h2 class="fw-bold text-dark mb-1">Welcome Back</h2>
-          <p class="text-muted small mb-0">Sign in to manage your policies, claims & premiums</p>
+          <h2 class="fw-bold text-dark mb-1">
+            {{ forgotStep === 1 ? 'Forgot Password?' : 'Reset Your Password' }}
+          </h2>
+          <p class="text-muted small mb-0">
+            {{ forgotStep === 1 ? 'Enter your registered email and we will send a 6-digit verification code.' : 'Enter the 6-digit verification code sent to your email along with your new password.' }}
+          </p>
         </div>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-          <!-- Info Message -->
-          <div class="alert alert-info py-2 px-3 small rounded-3 d-flex align-items-center gap-2 mb-3" *ngIf="infoMessage">
-            <span>ℹ️</span>
-            <span>{{ infoMessage }}</span>
-          </div>
+        <!-- Success Alert -->
+        <div class="alert alert-success py-2 px-3 small rounded-3 d-flex align-items-center gap-2 mb-3" *ngIf="forgotSuccess">
+          <span>✅</span>
+          <span>{{ forgotSuccess }}</span>
+        </div>
 
-          <!-- Error Message with Inline OTP verification if unverified -->
-          <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3" *ngIf="errorMessage">
-            <div class="d-flex align-items-center gap-2">
-              <span>⚠️</span>
-              <span>{{ errorMessage }}</span>
-            </div>
-            <button
-              *ngIf="needsEmailVerification"
-              type="button"
-              class="btn btn-sm btn-danger mt-2 w-100 fw-semibold"
-              (click)="openOtpVerification()">
-              Send & Verify OTP Now
-            </button>
-          </div>
+        <!-- Error Alert -->
+        <div class="alert alert-danger py-2 px-3 small rounded-3 d-flex align-items-center gap-2 mb-3" *ngIf="forgotError">
+          <span>⚠️</span>
+          <span>{{ forgotError }}</span>
+        </div>
 
-          <!-- Email Field -->
+        <!-- Step 1: Enter Registered Email -->
+        <div *ngIf="forgotStep === 1">
           <div class="mb-3">
-            <label class="form-label small fw-semibold text-secondary mb-1">Email Address</label>
+            <label class="form-label small fw-semibold text-secondary mb-1">Registered Email Address</label>
             <div class="input-group">
               <span class="input-group-text bg-light border-end-0 text-muted">✉️</span>
               <input
                 type="email"
                 class="form-control border-start-0"
                 placeholder="name@example.com"
-                formControlName="email">
+                [(ngModel)]="forgotEmail"
+                [disabled]="isSubmittingForgot"
+                (keyup.enter)="sendForgotOtp()">
             </div>
-            <small class="text-danger small mt-1 d-block" *ngIf="loginForm.controls.email.touched && loginForm.controls.email.invalid">
-              Please enter a valid email address.
-            </small>
           </div>
 
-          <!-- Password Field -->
-          <div class="mb-4">
-            <label class="form-label small fw-semibold text-secondary mb-1">Password</label>
+          <button
+            type="button"
+            class="btn btn-primary w-100 py-3 fw-bold shadow-sm submit-btn d-flex justify-content-center align-items-center gap-2 mb-3"
+            (click)="sendForgotOtp()"
+            [disabled]="!forgotEmail || isSubmittingForgot">
+            <span *ngIf="isSubmittingForgot" class="spinner-border spinner-border-sm" role="status"></span>
+            <span>{{ isSubmittingForgot ? 'Sending Verification Code...' : 'Send Reset Code →' }}</span>
+          </button>
+
+          <!-- Direct Link if user already got the code -->
+          <div class="text-center mb-3">
+            <button
+              type="button"
+              class="btn btn-link p-0 text-primary small fw-semibold text-decoration-none"
+              (click)="goToOtpStep()">
+              📩 Already received the code? Enter Code Here →
+            </button>
+          </div>
+
+          <div class="text-center pt-2 border-top">
+            <button type="button" class="btn btn-link text-secondary text-decoration-none small fw-semibold" (click)="closeForgotPassword()">
+              ← Back to Sign In
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Enter OTP & New Password -->
+        <div *ngIf="forgotStep === 2">
+          <div class="bg-light border rounded-3 p-2 mb-3 d-flex justify-content-between align-items-center small">
+            <span class="text-muted">Resetting for: <strong class="text-dark">{{ forgotEmail }}</strong></span>
+            <button type="button" class="btn btn-sm btn-link p-0 text-primary text-decoration-none" (click)="forgotStep = 1">Change</button>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-secondary mb-1">6-Digit Verification Code</label>
+            <input
+              type="text"
+              class="form-control otp-input-field text-center font-monospace fw-bold fs-5"
+              maxlength="6"
+              inputmode="numeric"
+              placeholder="••••••"
+              [(ngModel)]="forgotOtp">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-secondary mb-1">New Password</label>
             <div class="input-group">
               <span class="input-group-text bg-light border-end-0 text-muted">🔒</span>
               <input
-                type="password"
-                class="form-control border-start-0"
-                placeholder="Enter your account password"
-                formControlName="password">
+                [type]="showNewPassword ? 'text' : 'password'"
+                class="form-control border-start-0 border-end-0"
+                placeholder="Enter new password (min 6 chars)"
+                [(ngModel)]="newPassword">
+              <button
+                type="button"
+                class="input-group-text bg-light border-start-0 text-muted btn btn-link p-2"
+                (click)="showNewPassword = !showNewPassword"
+                style="cursor: pointer; text-decoration: none;">
+                <span>{{ showNewPassword ? '👁️' : '🙈' }}</span>
+              </button>
             </div>
-            <small class="text-danger small mt-1 d-block" *ngIf="loginForm.controls.password.touched && loginForm.controls.password.invalid">
-              Password is required.
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-secondary mb-1">Confirm New Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0 text-muted">🔒</span>
+              <input
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                class="form-control border-start-0 border-end-0"
+                placeholder="Re-enter new password"
+                [(ngModel)]="confirmNewPassword">
+              <button
+                type="button"
+                class="input-group-text bg-light border-start-0 text-muted btn btn-link p-2"
+                (click)="showConfirmPassword = !showConfirmPassword"
+                style="cursor: pointer; text-decoration: none;">
+                <span>{{ showConfirmPassword ? '👁️' : '🙈' }}</span>
+              </button>
+            </div>
+            <small class="text-danger small mt-1 d-block" *ngIf="confirmNewPassword && newPassword !== confirmNewPassword">
+              Passwords do not match.
             </small>
           </div>
 
-          <!-- Submit Button -->
-          <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm submit-btn d-flex justify-content-center align-items-center gap-2" [disabled]="loginForm.invalid || isLoading">
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span>{{ isLoading ? 'Authenticating...' : 'Sign In to Safe Insurance ' }}</span>
+          <div class="text-center mb-3">
+            <span class="small text-muted" *ngIf="forgotCooldown > 0">
+              Resend code in <strong>{{ forgotCooldown }}s</strong>
+            </span>
+            <button
+              *ngIf="forgotCooldown === 0"
+              type="button"
+              class="btn btn-link btn-sm p-0 text-primary fw-semibold text-decoration-none"
+              (click)="resendForgotOtp()"
+              [disabled]="isSubmittingForgot">
+              Didn't receive the code? Resend
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-success w-100 py-3 fw-bold shadow-sm submit-btn d-flex justify-content-center align-items-center gap-2 mb-3"
+            (click)="submitResetPassword()"
+            [disabled]="isSubmittingForgot || !forgotOtp || !newPassword || !confirmNewPassword || newPassword !== confirmNewPassword">
+            <span *ngIf="isSubmittingForgot" class="spinner-border spinner-border-sm" role="status"></span>
+            <span>{{ isSubmittingForgot ? 'Resetting Password...' : 'Reset Password & Sign In →' }}</span>
           </button>
 
-          <!-- Register Link -->
-          <div class="text-center mt-4 pt-2 border-top">
-            <p class="text-muted small mb-0">
-              New to SafeInsure?
-              <a routerLink="/register" class="fw-bold text-primary text-decoration-none ms-1">Create an Account →</a>
-            </p>
+          <div class="text-center pt-2 border-top">
+            <button type="button" class="btn btn-link text-secondary text-decoration-none small fw-semibold" (click)="closeForgotPassword()">
+              ← Back to Sign In
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- 2. Standard Login & OTP Views -->
+      <ng-template #standardAuthFlow>
+        <ng-container *ngIf="!isOtpStep; else loginOtpTemplate">
+          <!-- Form Header -->
+          <div class="form-header text-center mb-4">
+            <div class="login-logo-box mx-auto mb-3">
+              <img src="logo.png" alt="Safe Insurance Logo" class="login-logo">
+            </div>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill small fw-semibold mb-2 d-inline-block">
+              🔒 Secure Access Portal
+            </span>
+            <h2 class="fw-bold text-dark mb-1">Welcome Back</h2>
+            <p class="text-muted small mb-0">Sign in to manage your policies, claims & premiums</p>
           </div>
 
-          <!-- Regulatory Security Footer -->
-          <div class="security-footer text-center mt-4">
-            <small class="text-muted d-inline-flex align-items-center gap-1" style="font-size: 0.73rem;">
-              <span>🛡️</span>
-              <span>256-Bit SSL Encrypted • Regulated Insurance Services</span>
-            </small>
-          </div>
-        </form>
-      </ng-container>
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <!-- Info Message -->
+            <div class="alert alert-info py-2 px-3 small rounded-3 d-flex align-items-center gap-2 mb-3" *ngIf="infoMessage">
+              <span>ℹ️</span>
+              <span>{{ infoMessage }}</span>
+            </div>
+
+            <!-- Error Message with Inline OTP verification if unverified -->
+            <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3" *ngIf="errorMessage">
+              <div class="d-flex align-items-center gap-2">
+                <span>⚠️</span>
+                <span>{{ errorMessage }}</span>
+              </div>
+              <button
+                *ngIf="needsEmailVerification"
+                type="button"
+                class="btn btn-sm btn-danger mt-2 w-100 fw-semibold"
+                (click)="openOtpVerification()">
+                Send & Verify OTP Now
+              </button>
+            </div>
+
+            <!-- Email Field -->
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-secondary mb-1">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted">✉️</span>
+                <input
+                  type="email"
+                  class="form-control border-start-0"
+                  placeholder="name@example.com"
+                  formControlName="email">
+              </div>
+              <small class="text-danger small mt-1 d-block" *ngIf="loginForm.controls.email.touched && loginForm.controls.email.invalid">
+                Please enter a valid email address.
+              </small>
+            </div>
+
+            <!-- Password Field with Forgot Password Link -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small fw-semibold text-secondary mb-0">Password</label>
+                <button
+                  type="button"
+                  class="btn btn-link p-0 small text-primary text-decoration-none fw-semibold forgot-pwd-link"
+                  (click)="openForgotPassword()">
+                  Forgot Password?
+                </button>
+              </div>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted">🔒</span>
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  class="form-control border-start-0 border-end-0"
+                  placeholder="Enter your account password"
+                  formControlName="password">
+                <button
+                  type="button"
+                  class="input-group-text bg-light border-start-0 text-muted btn btn-link p-2"
+                  (click)="showPassword = !showPassword"
+                  title="Toggle password visibility"
+                  style="cursor: pointer; text-decoration: none;">
+                  <span *ngIf="showPassword">👁️</span>
+                  <span *ngIf="!showPassword">🙈</span>
+                </button>
+              </div>
+              <small class="text-danger small mt-1 d-block" *ngIf="loginForm.controls.password.touched && loginForm.controls.password.invalid">
+                Password is required.
+              </small>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm submit-btn d-flex justify-content-center align-items-center gap-2" [disabled]="loginForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span>{{ isLoading ? 'Authenticating...' : 'Sign In to Safe Insurance' }}</span>
+            </button>
+
+            <!-- Register Link -->
+            <div class="text-center mt-4 pt-2 border-top">
+              <p class="text-muted small mb-0">
+                New to SafeInsure?
+                <a routerLink="/register" class="fw-bold text-primary text-decoration-none ms-1">Create an Account →</a>
+              </p>
+            </div>
+
+            <!-- Regulatory Security Footer -->
+            <div class="security-footer text-center mt-4">
+              <small class="text-muted d-inline-flex align-items-center gap-1" style="font-size: 0.73rem;">
+                <span>🛡️</span>
+                <span>256-Bit SSL Encrypted • Regulated Insurance Services</span>
+              </small>
+            </div>
+          </form>
+        </ng-container>
+      </ng-template>
 
       <!-- Inline OTP Verification View -->
       <ng-template #loginOtpTemplate>

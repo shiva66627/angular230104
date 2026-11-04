@@ -165,7 +165,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (c of claims; track c.claimId) {
+                @for (c of paginatedClaims; track c.claimId) {
                 <tr>
                   <td><strong>CLM-{{ c.claimNumber }}</strong><br><small class="text-muted">{{ c.createdDate | date:'dd-MMM' }}</small></td>
                   <td>POL-{{ c.policyNumber }}</td>
@@ -202,6 +202,43 @@
                 }
               </tbody>
             </table>
+          </div>
+          <div class="card-footer bg-white border-top py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 small text-muted">
+              <span>Show</span>
+              <select class="form-select form-select-sm" style="width: 75px;" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+                <option [ngValue]="5">5</option>
+                <option [ngValue]="10">10</option>
+                <option [ngValue]="20">20</option>
+              </select>
+              <span>
+                entries &bull; Showing <strong>{{ startIndex }}</strong> to <strong>{{ endIndex }}</strong> of <strong>{{ claims.length }}</strong> claims
+              </span>
+            </div>
+
+            @if (totalPages > 1) {
+            <nav aria-label="Customer claims pagination">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="setPage(1)" title="First Page">«</button>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="setPage(currentPage - 1)" title="Previous Page">‹</button>
+                </li>
+                @for (p of getPageNumbers(); track p) {
+                <li class="page-item" [class.active]="p === currentPage">
+                  <button class="page-link" (click)="setPage(p)">{{ p }}</button>
+                </li>
+                }
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="setPage(currentPage + 1)" title="Next Page">›</button>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="setPage(totalPages)" title="Last Page">»</button>
+                </li>
+              </ul>
+            </nav>
+            }
           </div>
         </div>
       </div>

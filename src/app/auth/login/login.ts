@@ -1,6 +1,6 @@
 import { Component, ChangeDetectorRef, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { timeout } from 'rxjs';
 
@@ -9,7 +9,7 @@ import { AuthService } from '../../services/auth';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
@@ -29,6 +29,21 @@ export class Login implements OnDestroy {
   resendCooldown = 0;
   showPassword = false;
   private resendTimer: any;
+
+  // Forgot Password State
+  isForgotPassword = false;
+  forgotStep: 1 | 2 = 1;
+  forgotEmail = '';
+  forgotOtp = '';
+  newPassword = '';
+  confirmNewPassword = '';
+  showNewPassword = false;
+  showConfirmPassword = false;
+  forgotError = '';
+  forgotSuccess = '';
+  isSubmittingForgot = false;
+  forgotCooldown = 0;
+  private forgotTimer: any;
 
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -193,8 +208,155 @@ export class Login implements OnDestroy {
     }
   }
 
+  openForgotPassword() {
+    this.isForgotPassword = true;
+    this.forgotStep = 1;
+    this.forgotEmail = this.loginForm.value.email?.trim() || '';
+    this.forgotOtp = '';
+    this.newPassword = '';
+    this.confirmNewPassword = '';
+    this.forgotError = '';
+    this.forgotSuccess = '';
+    this.cdr.detectChanges();
+  }
+
+  closeForgotPassword() {
+    this.isForgotPassword = false;
+    this.clearForgotTimer();
+    this.forgotError = '';
+    this.forgotSuccess = '';
+    this.cdr.detectChanges();
+  }
+
+  goToOtpStep() {
+    this.forgotStep = 2;
+    this.forgotError = '';
+    this.forgotSuccess = 'Please enter the 6-digit code from your email and your new password.';
+    this.cdr.detectChanges();
+  }
+
+  sendForgotOtp() {
+    const email = (this.forgotEmail || '').trim();
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      this.forgotError = 'Please enter a valid email address.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isSubmittingForgot = true;
+    this.forgotError = '';
+    this.forgotSuccess = '';
+
+    this.authService.forgotPassword(email).pipe(timeout(25000)).subscribe({
+      next: (res) => {
+        this.isSubmittingForgot = false;
+        const isOk = res?.success === true || res?.Success === true;
+        if (isOk) {
+          this.forgotStep = 2;
+          this.forgotSuccess = res.message || res.Message || 'A 6-digit OTP code has been sent to your email!';
+          this.startForgotCooldown(60);
+        } else {
+          const msg = res?.message || res?.Message || '';
+          if (msg.toLowerCase().includes('wait') || msg.toLowerCase().includes('already')) {
+            this.forgotStep = 2;
+            this.forgotSuccess = 'A reset code was already sent to your email. Please enter it below:';
+          } else {
+            this.forgotError = msg || 'Unable to process request.';
+          }
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isSubmittingForgot = false;
+        const msg = err?.error?.message || err?.error?.Message || '';
+        if (msg.toLowerCase().includes('wait') || msg.toLowerCase().includes('already')) {
+          this.forgotStep = 2;
+          this.forgotSuccess = 'A reset code was already sent to your email. Please enter it below:';
+        } else {
+          this.forgotError = msg || 'Unable to send password reset code. Please ensure backend is running.';
+        }
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  resendForgotOtp() {
+    if (this.forgotCooldown > 0 || this.isSubmittingForgot) return;
+    this.sendForgotOtp();
+  }
+
+  submitResetPassword() {
+    const email = (this.forgotEmail || '').trim();
+    const otp = (this.forgotOtp || '').trim();
+    const newPwd = this.newPassword;
+    const confirmPwd = this.confirmNewPassword;
+
+    if (!otp || otp.length !== 6) {
+      this.forgotError = 'Please enter the 6-digit verification code.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (!newPwd || newPwd.length < 6) {
+      this.forgotError = 'New password must be at least 6 characters long.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (newPwd !== confirmPwd) {
+      this.forgotError = 'Passwords do not match. Please verify.';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isSubmittingForgot = true;
+    this.forgotError = '';
+    this.forgotSuccess = '';
+
+    this.authService.resetPassword({ email, otp, newPassword: newPwd }).pipe(timeout(25000)).subscribe({
+      next: (res) => {
+        this.isSubmittingForgot = false;
+        const isOk = res?.success === true || res?.Success === true;
+        if (isOk) {
+          this.closeForgotPassword();
+          this.infoMessage = res.message || res.Message || 'Password reset successfully! You can now sign in.';
+          this.loginForm.patchValue({ email: email, password: '' });
+        } else {
+          this.forgotError = res.message || res.Message || 'Invalid code or unable to reset password.';
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isSubmittingForgot = false;
+        this.forgotError = err?.error?.message || err?.error?.Message || 'Failed to reset password. Please check the code.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private startForgotCooldown(seconds: number) {
+    this.clearForgotTimer();
+    this.forgotCooldown = seconds;
+    this.forgotTimer = setInterval(() => {
+      this.forgotCooldown--;
+      if (this.forgotCooldown <= 0) {
+        this.clearForgotTimer();
+      }
+      this.cdr.detectChanges();
+    }, 1000);
+  }
+
+  private clearForgotTimer() {
+    this.forgotCooldown = 0;
+    if (this.forgotTimer) {
+      clearInterval(this.forgotTimer);
+      this.forgotTimer = null;
+    }
+  }
+
   ngOnDestroy() {
     this.clearResendTimer();
+    this.clearForgotTimer();
   }
 
   private decodeJwtPayload(token: string): Record<string, any> | null {

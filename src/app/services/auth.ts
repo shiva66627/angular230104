@@ -46,6 +46,20 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/forgot-password`,
+      { email }
+    );
+  }
+
+  resetPassword(data: { email: string; otp: string; newPassword: string }): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/reset-password`,
+      data
+    );
+  }
+
   logout(): void {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       localStorage.clear();

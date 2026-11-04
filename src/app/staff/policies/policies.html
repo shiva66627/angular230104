@@ -15,14 +15,14 @@
           <div class="col-md-5 col-lg-4">
             <div class="input-group">
               <span class="input-group-text bg-white border-end-0">🔍</span>
-              <input type="text" [(ngModel)]="searchText" class="form-control border-start-0" placeholder="Search Policy No, Customer, Plan, Reg No...">
+              <input type="text" [(ngModel)]="searchText" (input)="onFilterChange()" class="form-control border-start-0" placeholder="Search Policy No, Customer, Plan, Reg No...">
               @if (searchText) {
-                <button class="btn btn-outline-secondary border-start-0 bg-white" (click)="searchText = ''">✕</button>
+                <button class="btn btn-outline-secondary border-start-0 bg-white" (click)="searchText = ''; onFilterChange()">✕</button>
               }
             </div>
           </div>
           <div class="col-md-3 col-lg-3">
-            <select class="form-select" [(ngModel)]="selectedCategory">
+            <select class="form-select" [(ngModel)]="selectedCategory" (change)="onFilterChange()">
               <option value="All">All Categories</option>
               <option value="Motor">🚗 Motor Insurance</option>
               <option value="Health">🏥 Health Insurance</option>
@@ -31,7 +31,7 @@
             </select>
           </div>
           <div class="col-md-2 col-lg-2">
-            <select class="form-select" [(ngModel)]="selectedStatus">
+            <select class="form-select" [(ngModel)]="selectedStatus" (change)="onFilterChange()">
               <option value="All">All Status</option>
               <option value="0">Pending</option>
               <option value="1">Active</option>
@@ -40,7 +40,7 @@
             </select>
           </div>
           <div class="col-md-2 col-lg-3">
-            <select class="form-select" [(ngModel)]="sortBy">
+            <select class="form-select" [(ngModel)]="sortBy" (change)="onFilterChange()">
               <option value="default">Default Sort</option>
               <option value="date-desc">Newest First</option>
               <option value="date-asc">Oldest First</option>
@@ -72,7 +72,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (p of getFilteredPolicies(); track p.policyId) {
+            @for (p of paginatedPolicies; track p.policyId) {
             @let meta = getPolicyMeta(p);
             <tr>
               <td>
@@ -148,9 +148,40 @@
       </div>
     </div>
 
-    <div class="card-footer bg-white border-top py-3 text-muted small d-flex justify-content-between align-items-center">
-      <span>Staff Underwriting Portal &bull; Policy Issuance Desk</span>
-      <span>Total Records: {{ policies.length }}</span>
+    <div class="card-footer bg-white border-top py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 text-muted small">
+        <span>Rows per page:</span>
+        <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+        </select>
+        <span>Showing {{ startIndex }} to {{ endIndex }} of {{ getFilteredPolicies().length }} entries</span>
+      </div>
+      @if (totalPages > 1) {
+        <nav aria-label="Page navigation">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="setPage(1)" [disabled]="currentPage === 1">« First</button>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1">‹ Prev</button>
+            </li>
+            @for (p of getPageNumbers(); track p) {
+              <li class="page-item" [class.active]="p === currentPage">
+                <button class="page-link" (click)="setPage(p)">{{ p }}</button>
+              </li>
+            }
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages">Next ›</button>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="setPage(totalPages)" [disabled]="currentPage === totalPages">Last »</button>
+            </li>
+          </ul>
+        </nav>
+      }
     </div>
   </div>
 </div>
